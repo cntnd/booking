@@ -1,0 +1,7 @@
+MODULE=Reservationssystem
+SELECT_CHOOSE=-bitte wählen-
+SAVE=Speichern
+REFRESH=Aktualisieren
+ADD=Hinzufügen
+DELETE=Löschen
+RESET=Zurücksetzen
