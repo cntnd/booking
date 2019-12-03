@@ -27,8 +27,8 @@ gulp.task('sass', function() {
 
 gulp.task('zip', function() {
   return gulp.src(['src/module/**/*','!src/module/scss*'])
-  		.pipe(zip('cntnd_booking-module.zip'))
-  		.pipe(gulp.dest('dist'));
+  		.pipe(zip('cntnd_booking.zip'))
+  		.pipe(gulp.dest('dist/module/'));
 });
 
 gulp.task('clean', function () {
@@ -76,7 +76,7 @@ gulp.task('plugin-xml', function () {
         .pipe(gulp.dest('src/plugin/'));
 });
 
-gulp.task('xml', gulp.series('info-xml','plugin-xml'));
+gulp.task('xml', gulp.series('info-xml'));
 
 gulp.task('default', gulp.series('sass','watch'));
 

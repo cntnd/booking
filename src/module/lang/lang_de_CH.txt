@@ -1,4 +1,16 @@
 MODULE=Reservationssystem
+DATERANGE=Zeitraum wählen
+BLOCKED_DAYS=Gesperrte Tage
+INTERVAL=Intervall
+TIME=Tageszeit
+TIME_FROM=von
+TIME_TO=bis
+TIME_DISABLED=zuerst Intervall und Tageszeit-Von auswählen
+SHOW_DATERANGE=Anzeige Zeitraum
+SELECT_DATERANGE=- ganzer Zeitraum anzeigen -
+EMAIL=E-Mail
+NO_CONFIG=Bitte das Module konfigurieren
+NO_BOOKING=Zurzeit keine Reservationen möglich
 SELECT_CHOOSE=-bitte wählen-
 SAVE=Speichern
 REFRESH=Aktualisieren
