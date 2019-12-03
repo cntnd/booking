@@ -17,12 +17,14 @@ class DateTimeUtil {
     return $range;
   }
 
-  public static function getDaterange($daterange){
+  public static function getDaterange($daterange,$blocked_days=false){
     $range=[];
     $dates=self::getDatesFromDaterange($daterange);
     $max=self::getDaysFromDateRange($daterange);
     for ($i=0; $i <= $max; $i++) {
-      $range[]=array($dates[0]->format('d.m.Y'), self::getReadableDate($dates[0]));
+      if (!self::isBlockedDay($dates[0], $blocked_days)){
+        $range[]=array($dates[0]->format('d.m.Y'), self::getReadableDate($dates[0]));
+      }
       $dates[0]->modify('+1 day');
     }
     return $range;
@@ -93,5 +95,16 @@ class DateTimeUtil {
 
   public static function getToWithInterval($from,$interval){
     return self::getReadableTime($from+$interval);
+  }
+
+  public static function isBlockedDay($date, $blocked_days){
+    if (is_array($blocked_days)){
+      $dt = self::checkDateTime($date);
+      $w = $dt->format('w');
+      if (array_key_exists($w,$blocked_days)){
+        return $blocked_days[$w];
+      }
+    }
+    return false;
   }
 }

@@ -29,7 +29,7 @@ class CntndBooking {
 
   public function render(){
     $timerange = DateTimeUtil::getTimerange($this->timerange_from, $this->timerange_to, $this->interval);
-    $daterange = DateTimeUtil::getDaterange($this->daterange);
+    $daterange = DateTimeUtil::getDaterange($this->daterange,$this->blocked_days);
     echo '<table class="table">';
     echo '<thead><tr>';
     echo '<th>Datum</th>';

@@ -19,7 +19,7 @@ $timerange_from = "CMS_VALUE[4]";
 $timerange_to = "CMS_VALUE[5]";
 
 // other/vars
-if (empty($interval)){
+if (empty($interval) || empty($timerange_from)){
     $timerange_to_disabled = 'disabled="disabled"';
 }
 
@@ -96,6 +96,11 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
   </div>
 
   <div class="form-group">
+    <?php
+    if (empty($interval) || empty($timerange_from)){
+      echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("TIME_DISABLED").'</div>';
+    }
+    ?>
     <div><?= mi18n("TIME") ?></div>
     <div class="form-check form-check-inline">
       <label for="blocked_day_sa" class="form-check-label"><?= mi18n("TIME_FROM") ?></label>
@@ -118,7 +123,7 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
       <label for="blocked_day_sa" class="form-check-label"><?= mi18n("TIME_TO") ?></label>
       <select class="form-check-input" name="CMS_VAR[5]" size="1" <?= $timerange_to_disabled ?>>
       <?php
-          if (!empty($timerange_from)){
+          if (!empty($timerange_from) && !empty($interval)){
               $timerange=DateTimeUtil::getTimerange($timerange_from,1440,$interval);
               foreach ($timerange as $time) {
                 $selected = "";
@@ -130,7 +135,6 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
           }
       ?>
       </select>
-      <small class="form-text text-muted"><?= mi18n("TIME_DISABLED") ?></small>
     </div>
   </div>
 
