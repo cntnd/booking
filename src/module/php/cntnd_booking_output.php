@@ -50,14 +50,6 @@ switch ($show_daterange){
             break;
 }
 
-$wtag[0] = "So.";
-$wtag[1] = "Mo.";
-$wtag[2] = "Di.";
-$wtag[3] = "Mi.";
-$wtag[4] = "Do.";
-$wtag[5] = "Fr.";
-$wtag[6] = "Sa.";
-
 $error=false;
 
 if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty($interval)){
@@ -71,5 +63,7 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
   echo '</div>';
 }
 
+echo '<div class="cntnd_booking">';
 $booking->render();
+echo '</div>';
 ?>

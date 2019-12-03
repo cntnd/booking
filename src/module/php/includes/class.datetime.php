@@ -4,9 +4,12 @@
  */
 class DateTimeUtil {
 
-  public static function getTimerange($from, $to, $interval){
+  public static function getTimerange($from, $to, $interval, $including=false){
     $range=[];
     $max = floor(($to - $from) / $interval);
+    if (!$including){
+      $max=$max-1;
+    }
     for ($i=0; $i <= $max; $i++) {
       $seconds = $from + ($i*$interval);
       $range[]=array($seconds, self::getReadableTime($seconds));
@@ -19,7 +22,7 @@ class DateTimeUtil {
     $dates=self::getDatesFromDaterange($daterange);
     $max=self::getDaysFromDateRange($daterange);
     for ($i=0; $i <= $max; $i++) {
-      $range[]=$dates[0]->format('d.m.Y');
+      $range[]=array($dates[0]->format('d.m.Y'), self::getReadableDate($dates[0]));
       $dates[0]->modify('+1 day');
     }
     return $range;
@@ -49,5 +52,46 @@ class DateTimeUtil {
   public static function getReadableTime($seconds){
     $time = self::getHourMinute($seconds);
     return sprintf("%02d:%02d", $time[0], $time[1]);
+  }
+
+  public static function isEvenWeek($date){
+    $dt = new DateTime($date);
+    return ($dt->format('W') % 2 == 0);
+  }
+
+  public static function isMonday($date){
+    $dt = new DateTime($date);
+    return ($dt->format('w')==1);
+  }
+
+  public static function getWeekday($date){
+    $wtag[0] = "So.";
+    $wtag[1] = "Mo.";
+    $wtag[2] = "Di.";
+    $wtag[3] = "Mi.";
+    $wtag[4] = "Do.";
+    $wtag[5] = "Fr.";
+    $wtag[6] = "Sa.";
+    $dt = self::checkDateTime($date);
+    return $wtag[$dt->format('w')];
+  }
+
+  public static function getReadableDate($date){
+    $weekday = self::getWeekday($date);
+    $dt = self::checkDateTime($date);
+    return $weekday.' '.$dt->format('d.m.Y');
+  }
+
+  public static function checkDateTime($date){
+    if (is_a($date,'DateTime')){
+      return $date;
+    }
+    else {
+      return new DateTime($date);
+    }
+  }
+
+  public static function getToWithInterval($from,$interval){
+    return self::getReadableTime($from+$interval);
   }
 }

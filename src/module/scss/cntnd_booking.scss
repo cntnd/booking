@@ -2,6 +2,7 @@
 // todo version!
 //@import url('https://cdn.jsdelivr.net/gh/cntnd/core_style@0.0.8/dist/core_style.css');
 @import url('https://cdn.jsdelivr.net/gh/cntnd/core_style@develop/dist/core_style.css');
+@import '_vars.scss';
 
 .content_box {
 	border: 1px solid silver;
@@ -19,106 +20,81 @@
 }
 
 /* OUTPUT */
-body {
-    font-family: arial;
+.cntnd_booking {
+	.table {
+			font-size: small;
+	    width: 100%;
+	    margin-bottom: $table-padding;
+	}
+
+	.table thead th {
+	    vertical-align: bottom;
+	    border-bottom: 2px solid $table-border-color;
+	}
+
+	.table td, .table th {
+	    padding: $table-padding;
+	    vertical-align: top;
+	    border-top: 1px solid $table-border-color;
+	}
+	.table td {
+		text-align: center;
+	}
+
+	.table tbody th {
+		text-align: right;
+	}
+
+	.table thead th {
+		text-align: center;
+	}
+
+	th .separator {
+		display: block;
+    line-height: 0.5;
+	}
 }
 
-table.res td {
-    font-size: 8pt;
-    padding: 0;
-    margin: 0;
-}
-
-table.res th,
-table.res nobr {
-    font-size: 8pt;
-    font-weight: bold;
-}
-
-.free {
-    background-color: #99CC66;
-}
-.reserved {
-    background-color: #FF6666;
-}
-.blocked {
-    background-color: #FF9933;
+.cntnd_booking-date {
+	cursor: pointer;
+	text-decoration: underline;
+	color: $res-date;
 }
 
 .res_checkbox {
-    display: none;
+    cursor: pointer;
+		margin: 0;
+		display: block;
 }
 
-#res_admin_del {
-    display: none;
-}
-
-.res_error {
-	display: block;
-    color: #a94442;
-    background-color: #f2dede;
-
-	padding: 15px;
-
-    margin-top: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ebccd1;
-}
-
-.res_reserved {
-	display: block;
-    color: #3c763d;
-    background-color: #dff0d8;
-
-	padding: 15px;
-
-    margin-top: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #d6e9c6;
-}
-.hide {
+.res_hide .res_checkbox {
 	display: none;
 }
-.more-less {
-	color: #0000BB;
-    line-height: 1.2em;
-	cursor: pointer;
-}
-.more-less:hover {
-	color: #6CB6E3;
-}
 
-tbody tr:nth-child(even) td.free,
 .free {
-    background-color: rgba(153, 204, 102, 1);
+    background-color: $free;
 }
 
-tbody tr:nth-child(even) td.reserved,
 .reserved {
-    background-color: rgba(255, 102, 102, 1);
+    background-color: $reserved;
 }
 
-tbody tr:nth-child(even) td.blocked,
 .blocked {
-    background-color: rgba(255, 153, 51, 1);
+    background-color: $blocked;
 }
 
-
-tbody tr:nth-child(even).even-dat td.free,
 .even-dat .free {
-    background-color: rgba(153, 204, 102, 0.5);
+    background-color: rgba($free, 0.5);
 }
-tbody tr:nth-child(even).even-dat td.reserved,
 .even-dat .reserved {
-    background-color: rgba(255, 102, 102, 1);
+    background-color: rgba($reserved, 0.5);
 }
-tbody tr:nth-child(even).even-dat td.blocked,
 .even-dat .blocked {
-    background-color: rgba(255, 153, 51, 1);
+    background-color: rgba($blocked, 0.5);
 }
 
-.kw-dat td {
-	border-top-color: black;
-    border-top-style: double;
-    border-top-width: 2px;
+.kw-dat td,
+.kw-dat th {
+  border-top-style: double !important;
+  border-top-width: 2px !important;
 }

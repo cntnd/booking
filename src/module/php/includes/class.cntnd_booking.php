@@ -30,20 +30,32 @@ class CntndBooking {
   public function render(){
     $timerange = DateTimeUtil::getTimerange($this->timerange_from, $this->timerange_to, $this->interval);
     $daterange = DateTimeUtil::getDaterange($this->daterange);
-    $max = DateTimeUtil::getDaysFromDateRange($this->daterange);
-    echo '<table>';
+    echo '<table class="table">';
     echo '<thead><tr>';
     echo '<th>Datum</th>';
     foreach ($timerange as $time) {
-      echo '<th>'.$time[1].'</th>';
+      $to = DateTimeUtil::getToWithInterval($time[0],$this->interval);
+      echo '<th>'.$time[1].'<span class="separator">-</span>'.$to.'</th>';
     }
     echo '</tr></thead>';
     echo '<tbody>';
     foreach ($daterange as $date) {
-      echo '<tr>';
-      echo '<th scope="row">'.$date.'</th>';
+      $class='res_hide';
+      if (DateTimeUtil::isEvenWeek($date[0])){
+        $class.=' even-dat';
+      }
+      if (DateTimeUtil::isMonday($date[0])){
+        $class.=' kw-dat';
+      }
+      echo '<tr class="'.$class.'"">';
+      echo '<th scope="row"><nobr class="cntnd_booking-date" data-date="'.$date[0].'">'.$date[1].'</nobr></th>';
       foreach ($timerange as $time) {
-        echo '<td><input type="checkbox" value="'.strtotime($date.' '.$time[1]).'" /></td>';
+        $timestamp = strtotime($date[0].' '.$time[1]);
+        echo '<td class="free">';
+        echo '<label for="'.$timestamp.'" class="res_checkbox">';
+        echo '<input id="'.$timestamp.'" type="checkbox" value="'.$timestamp.'" />';
+        echo '</label>';
+        echo '</td>';
       }
       echo '</tr>';
     }
