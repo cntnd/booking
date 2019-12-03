@@ -26,4 +26,17 @@ $(document).ready(function(){
     $('.not-in-range').addClass('hide');
     $('.cntnd_booking-more').removeClass('hide');
   });
+
+  $('#cntnd_booking-reservation').submit(function() {
+    $('.cntnd_booking-validation').addClass('hide');
+    var dates = $('.cntnd_booking-checkbox:checkbox:checked');
+    var required = $('#cntnd_booking-reservation .required').filter(function(){
+      return ($(this).val()==='');
+    });
+    if (dates.length===0 || required.length>0){
+      $('.cntnd_booking-validation').removeClass('hide');
+      return false;
+    }
+    return true;
+  });
 });

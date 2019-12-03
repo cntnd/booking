@@ -19,3 +19,6 @@ DELETE=Löschen
 RESET=Zurücksetzen
 MORE=Mehr anzeigen
 LESS=Weniger anzeigen
+SUCCESS=Die Reservation wurde getätigt, sie erhalten in kürze eine Bestätigung per E-Mail.
+FAILURE=Es gab ein Fehler, bitte wählen Sie mindestens einen Zeitraum aus.
+VALIDATION=Bitte alle Felder mit "*" ausfüllen und mindestens einen Zeitraum auswählen.

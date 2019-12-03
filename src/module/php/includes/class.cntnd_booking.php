@@ -60,7 +60,7 @@ class CntndBooking {
         $timestamp = strtotime($date[0].' '.$time[1]);
         echo '<td class="free">';
         echo '<label for="'.$timestamp.'" class="res_checkbox">';
-        echo '<input id="'.$timestamp.'" type="checkbox" value="'.$timestamp.'" />';
+        echo '<input id="'.$timestamp.'" class="cntnd_booking-checkbox" name="dates[]" type="checkbox" value="'.$timestamp.'" />';
         echo '</label>';
         echo '</td>';
       }

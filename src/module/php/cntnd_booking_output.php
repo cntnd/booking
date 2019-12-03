@@ -51,7 +51,9 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
 
 //if (!$editmode){
   // PUBLIC
+  var_dump($_POST);
   echo '<div class="cntnd_booking">';
+  echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation">';
   $booking->render();
   // show more/less
   if (!empty($show_daterange)){
@@ -60,10 +62,19 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
     echo '<span class="cntnd_booking-less hide">'.mi18n("LESS").'</span>';
     echo '</div>';
   }
+  // show messages
+  echo '<div class="cntnd_alert cntnd_alert-danger cntnd_booking-validation hide">'.mi18n("VALIDATION").'</div>';
+  if ($success){
+    echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("SUCCESS").'</div>';
+  }
+  if ($failure){
+    echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("FAILURE").'</div>';
+  }
   // use template to display formular
   $smarty->display('reservation-formular.html');
   echo '<button type="submit" class="btn btn-primary">'.mi18n("SAVE").'</button>';
   echo '<button type="reset" class="btn">'.mi18n("RESET").'</button>';
+  echo '</form>';
   echo '</div>';
 //}
 ?>
