@@ -45,6 +45,16 @@ class DateTimeUtil {
     return $max;
   }
 
+  public static function getFromDateFromDaterange($daterange){
+    $dates = self::getDatesFromDaterange($daterange);
+    return $dates[0];
+  }
+
+  public static function getToDateFromDaterange($daterange){
+    $dates = self::getDatesFromDaterange($daterange);
+    return $dates[1];
+  }
+
   public static function getHourMinute($seconds){
     $hour = floor($seconds / 60);
     $minute = (($seconds / 60) - $hour) * 60;
@@ -106,5 +116,15 @@ class DateTimeUtil {
       }
     }
     return false;
+  }
+
+  public static function isInShowRange($daterange, $show_daterange, $date){
+    if (!empty($show_daterange)){
+      $range = self::getFromDateFromDaterange($daterange);
+      $range->modify($show_daterange);
+      $dt = self::checkDateTime($date);
+      return ($dt < $range);
+    }
+    return true;
   }
 }

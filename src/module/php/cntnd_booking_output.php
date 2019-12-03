@@ -34,21 +34,7 @@ if ($editmode){
 
 // values
 $booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days);
-$interval_check = ($interval * 60);
-switch ($show_daterange){
-    case '1week':
-            $anzeige_check = "+1 Week";
-            break;
-    case '2week':
-            $anzeige_check = "+2 Week";
-            break;
-    case '3week':
-            $anzeige_check = "+3 Week";
-            break;
-    case '4week':
-            $anzeige_check = "+4 Week";
-            break;
-}
+$interval_check = ($interval * 60); // todo ??
 
 $error=false;
 
@@ -63,7 +49,21 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
   echo '</div>';
 }
 
-echo '<div class="cntnd_booking">';
-$booking->render();
-echo '</div>';
+//if (!$editmode){
+  // PUBLIC
+  echo '<div class="cntnd_booking">';
+  $booking->render();
+  // show more/less
+  if (!empty($show_daterange)){
+    echo '<div class="cntnd_booking-pagination">';
+    echo '<span class="cntnd_booking-more">'.mi18n("MORE").'</span>';
+    echo '<span class="cntnd_booking-less hide">'.mi18n("LESS").'</span>';
+    echo '</div>';
+  }
+  // use template to display formular
+  $smarty->display('reservation-formular.html');
+  echo '<button type="submit" class="btn btn-primary">'.mi18n("SAVE").'</button>';
+  echo '<button type="reset" class="btn">'.mi18n("RESET").'</button>';
+  echo '</div>';
+//}
 ?>

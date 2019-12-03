@@ -30,6 +30,7 @@ class CntndBooking {
   public function render(){
     $timerange = DateTimeUtil::getTimerange($this->timerange_from, $this->timerange_to, $this->interval);
     $daterange = DateTimeUtil::getDaterange($this->daterange,$this->blocked_days);
+
     echo '<table class="table">';
     echo '<thead><tr>';
     echo '<th>Datum</th>';
@@ -46,6 +47,12 @@ class CntndBooking {
       }
       if (DateTimeUtil::isMonday($date[0])){
         $class.=' kw-dat';
+      }
+      if (!DateTimeUtil::isInShowRange($this->daterange,$this->show_daterange,$date[0])){
+        $class.=' not-in-range hide';
+      }
+      else {
+        $class.=' in-range';
       }
       echo '<tr class="'.$class.'"">';
       echo '<th scope="row"><nobr class="cntnd_booking-date" data-date="'.$date[0].'">'.$date[1].'</nobr></th>';

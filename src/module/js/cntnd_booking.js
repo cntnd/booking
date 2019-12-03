@@ -14,4 +14,16 @@ $(document).ready(function(){
       $(this).parents('td').removeClass('reserved');
     }
   });
+
+  $('.cntnd_booking-more').click(function(){
+    $(this).addClass('hide');
+    $('.not-in-range').removeClass('hide');
+    $('.cntnd_booking-less').removeClass('hide');
+  });
+
+  $('.cntnd_booking-less').click(function(){
+    $(this).addClass('hide');
+    $('.not-in-range').addClass('hide');
+    $('.cntnd_booking-more').removeClass('hide');
+  });
 });

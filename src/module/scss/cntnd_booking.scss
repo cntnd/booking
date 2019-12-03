@@ -55,10 +55,17 @@
 	}
 }
 
-.cntnd_booking-date {
+.cntnd_booking-date,
+.cntnd_booking-more,
+.cntnd_booking-less {
 	cursor: pointer;
 	text-decoration: underline;
 	color: $res-date;
+}
+
+.cntnd_booking-pagination {
+	margin-top: $padding;
+	margin-bottom: $padding;
 }
 
 .res_checkbox {

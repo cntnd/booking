@@ -73,7 +73,7 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
         <?php
             for ($i=1;$i<5;$i++){
                 $selected = "";
-                $val=$i."week";
+                $val='+'.$i.' week';
                 if ($val==$show_daterange){
                     $selected = 'selected="selected"';
                 }
