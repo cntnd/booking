@@ -21,10 +21,10 @@ $timerange_to = "CMS_VALUE[5]";
 // other/vars
 if (empty($interval)){
     $timerange_to_disabled = 'disabled="disabled"';
-    $time_msg = "<b>(zuerst Intervall und Tageszeit-Von auswählen)</b>";
 }
 
 // includes
+cInclude('module', 'includes/class.datetime.php');
 cInclude('module', 'includes/script.cntnd_booking_input.php');
 cInclude('module', 'includes/style.cntnd_booking_input.php');
 ?>
@@ -102,13 +102,13 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
       <select class="form-check-input" name="CMS_VAR[4]" size="1">
       <?php
           for ($i=0;$i<48;$i++){
+              $min=$i*30;
               $selected = "";
-              $time = date("H:i", mktime(0, $min, 0, 1, 1, 2000));
+              $time = DateTimeUtil::getReadableTime($min);
               if ($min==$timerange_from){
                   $selected = 'selected="selected"';
               }
               echo '<option value="'.$min.'" '.$selected.'> '.$time.'</option>';
-              $min=$min+30;
           }
       ?>
       </select>
@@ -119,20 +119,18 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
       <select class="form-check-input" name="CMS_VAR[5]" size="1" <?= $timerange_to_disabled ?>>
       <?php
           if (!empty($timerange_from)){
-              $min = $timerange_from;
-              while($min<1440){
-                  $selected = "";
-                  $time = date("H:i", mktime(0, $min, 0, 1, 1, 2000)+3600);
-                  if ($min==$timerange_to){
-                      $selected = 'selected="selected"';
-                  }
-                  echo '<option value="'.$min.'" '.$selected.'> '.$time.'</option>';
-                  $min=$min+$interval;
+              $timerange=DateTimeUtil::getTimerange($timerange_from,1440,$interval);
+              foreach ($timerange as $time) {
+                $selected = "";
+                if ($time[0]==$timerange_to){
+                    $selected = 'selected="selected"';
+                }
+                echo '<option value="'.$time[0].'" '.$selected.'> '.$time[1].'</option>';
               }
           }
       ?>
       </select>
-      <small class="form-text text-muted hide"><?= mi18n("TIME_DISABLED") ?></small>
+      <small class="form-text text-muted"><?= mi18n("TIME_DISABLED") ?></small>
     </div>
   </div>
 

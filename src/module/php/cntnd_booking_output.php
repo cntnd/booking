@@ -26,12 +26,14 @@ $blocked_days[6] = (empty("CMS_VALUE[16]")) ? false : true;
 $blocked_days[0] = (empty("CMS_VALUE[10]")) ? false : true;
 
 // includes
+cInclude('module', 'includes/class.datetime.php');
 cInclude('module', 'includes/class.cntnd_booking.php');
 if ($editmode){
   cInclude('module', 'includes/script.cntnd_booking_output.php');
 }
 
 // values
+$booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days);
 $interval_check = ($interval * 60);
 switch ($show_daterange){
     case '1week':
@@ -69,5 +71,5 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
   echo '</div>';
 }
 
-
+$booking->render();
 ?>
