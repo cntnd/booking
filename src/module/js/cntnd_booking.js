@@ -35,13 +35,39 @@ $(document).ready(function(){
     return window.btoa(JSON.stringify(elements));
   }
 
+  function validateDates(){
+    var dates = $('.cntnd_booking-checkbox:checkbox:checked');
+    if (dates.length>0){
+      var valid=true;
+      var interval_ms=$('#cntnd_booking-reservation').data('interval')*60; // interval is in sec and timestamp is in ms
+      var old;
+      dates.each(function(){
+        var date = $(this).val();
+        if (old!==undefined){
+          var diff = date-old;
+          if (diff>interval_ms){
+            valid=false;
+          }
+          var options = { year: 'numeric', month: 'long', day: 'numeric' };
+          var d1 = new Date(old*1000).toLocaleDateString('de', options);
+          var d2 = new Date(date*1000).toLocaleDateString('de', options);
+          if (d1!==d2){
+            valid=false;
+          }
+        }
+        old = $(this).val();
+      });
+      return valid;
+    }
+    return false;
+  }
+
   $('#cntnd_booking-reservation').submit(function() {
     $('.cntnd_booking-validation').addClass('hide');
-    var dates = $('.cntnd_booking-checkbox:checkbox:checked');
     var required = $('#cntnd_booking-reservation .required').filter(function(){
       return ($(this).val()==='');
     });
-    if (dates.length===0 || required.length>0){
+    if (!validateDates() || required.length>0){
       $('.cntnd_booking-validation').removeClass('hide');
       return false;
     }

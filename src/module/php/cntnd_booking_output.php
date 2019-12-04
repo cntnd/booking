@@ -61,7 +61,7 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
     }
   }
   echo '<div class="cntnd_booking">';
-  echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation">';
+  echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation" data-interval="'.$interval.'">';
   $booking->render();
   // show more/less
   if (!empty($show_daterange)){
