@@ -55,13 +55,39 @@ if ($editmode){
   echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("ADMIN_MODE").'</div>';
   echo '<div class="d-flex ">';
 
-  echo '<div class="w-50">';
+  echo '<div class="w-50 pr-10">';
   $smarty = cSmartyFrontend::getInstance();
   $smarty->assign('data', $booking->admin());
   $smarty->display('admin-liste.html');
   echo '</div>';
 
-  echo '<div class="w-50" style="background: silver;">kalender? oder form oder beides</div>';
+  echo '<div class="w-50 pl-10">';
+  echo '<div class="cntnd_booking-admin-action">
+    <h5>'.mi18n("ADMIN_ACTION").'</h5>
+    <div class="form-vertical card">
+      <div class="card-body">
+        <form method="post" id="cntnd_booking-admin" name="cntnd_booking-admin">
+          <div class="form-group">
+        		<label for="bemerkungen">Bemerkungen</label>
+        		<textarea name="bemerkungen" class="form-control"></textarea>
+        	</div>
+          <button class="btn btn-primary">'.mi18n("SAVE").'</button>
+          <button class="btn btn-dark">'.mi18n("DELETE").'</button>
+          <button class="btn cntnd_booking-admin-cancel" type="reset">'.mi18n("RESET").'</button>
+          <input type="hidden" name="resid" />
+          <input type="hidden" name="action" />
+          <div class="form-group">
+            <span>'.mi18n("EMAIL").'</span>
+            <div class="form-check form-check-inline">
+              <input id="email_senden" class="form-check-input" type="checkbox" name="email_senden" value="true" />
+              <label for="email_senden" class="form-check-label">'.mi18n("EMAIL_SEND").'</label>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>';
+  echo '</div>';
 
   echo '</div>';
   echo '</div>';

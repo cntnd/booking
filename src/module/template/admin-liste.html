@@ -1,15 +1,16 @@
 {foreach key=datum item=reservation from=$data}
   <h5>{$datum}</h5>
   {foreach item=res from=$reservation}
-  <div class="card {$res.status}">
+  <div class="card cntnd_booking {$res.status}" data-resid="{$res.id}">
+    <h5 class="card-header">{$res.time_von} bis {$res.time_bis} - Personen: {$res.personen}</h5>
     <div class="card-body">
-      <h5 class="card-title">{$res.time_von} bis {$res.time_bis} - Personen: {$res.personen}</h5>
       <div class="card-text">
         {$res.name}<br />
         {$res.adresse}{if $res.adresse neq '' and $res.plz_ort neq ''}, {/if}{$res.plz_ort}<br />
         {$res.email}<br />
         {$res.telefon}<br />
-        {$res.bemerkungen}
+        {$res.bemerkungen}<br />
+        <button class="btn btn-dark cntnd_booking-admin-choose">Auswählen</button>
       </div>
     </div>
   </div>

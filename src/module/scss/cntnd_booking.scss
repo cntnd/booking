@@ -83,13 +83,25 @@
     background-color: $free;
 }
 
-.card {
+.card.cntnd_booking {
 	font-size: small;
 	margin-bottom: 0.35rem;
 
+	.card-header,
 	.card-title {
 		font-size: 1rem;
 	}
+
+	&.focus {
+		box-shadow: 0 0 0 0.2rem rgba(82,88,93,.5);
+	}
+}
+
+.pr-10 {
+	padding-right: 10px;
+}
+.pl-10 {
+	padding-left: 10px;
 }
 
 .reserved,
