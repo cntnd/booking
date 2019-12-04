@@ -28,13 +28,10 @@ $(document).ready(function(){
   });
 
   function gatherElements(formId,elementClass){
-    console.log('gather','#'+formId+' .'+elementClass,$('#'.formId+' .'+elementClass));
     var elements=[];
     $('#'+formId+' .'+elementClass).each(function(){
-      console.log('element',$(this).attr('name'));
       elements.push($(this).attr('name'));
     });
-    console.log('all',elements);
     return window.btoa(JSON.stringify(elements));
   }
 
