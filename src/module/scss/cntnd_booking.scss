@@ -78,15 +78,27 @@
 	display: none;
 }
 
-.free {
+.free,
+.card.free {
     background-color: $free;
 }
 
-.reserved {
+.card {
+	font-size: small;
+	margin-bottom: 0.35rem;
+
+	.card-title {
+		font-size: 1rem;
+	}
+}
+
+.reserved,
+.card.reserved {
     background-color: $reserved;
 }
 
-.blocked {
+.blocked,
+.card.blocked {
     background-color: $blocked;
 }
 

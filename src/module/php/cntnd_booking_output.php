@@ -46,7 +46,27 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
   echo '</div>';
 }
 
-//if (!$editmode){
+if ($editmode){
+  // ADMIN
+  if ($_POST){
+    var_dump($_POST);
+  }
+	echo '<div class="content_box cntnd_booking"><label class="content_type_label">'.mi18n("MODULE").'</label>';
+  echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("ADMIN_MODE").'</div>';
+  echo '<div class="d-flex ">';
+
+  echo '<div class="w-50">';
+  $smarty = cSmartyFrontend::getInstance();
+  $smarty->assign('data', $booking->admin());
+  $smarty->display('admin-liste.html');
+  echo '</div>';
+
+  echo '<div class="w-50" style="background: silver;">kalender? oder form oder beides</div>';
+
+  echo '</div>';
+  echo '</div>';
+}
+else {
   // PUBLIC
   if ($_POST){
     if (CntndBooking::validate($_POST,$interval)){
@@ -91,5 +111,5 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
   echo '<input type="hidden" name="fields" id="cntnd_booking-fields" />';
   echo '</form>';
   echo '</div>';
-//}
+}
 ?>

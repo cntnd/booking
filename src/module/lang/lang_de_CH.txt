@@ -25,3 +25,4 @@ VALIDATION=Es gab ein Fehler:
 VALIDATION_REQUIRED=Bitte füllen Sie alle Felder mit "*" aus
 VALIDATION_DATES=Bitte wählen Sie mindestens ein Zeitraum aus
 VALIDATION_DAYS=Bitte erstellen Sie nur eine Reservation pro ausgewähltem Tag
+ADMIN_MODE=Administrator Modus

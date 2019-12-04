@@ -194,10 +194,6 @@ class CntndBooking {
   }
 
   public function load($daterange){
-    /*
-    // ADMIN MODUS
-    $sql = "SELECT * FROM cntnd_reservation WHERE datum >= '".date("Y-m-d")."' ORDER BY datum, time_von";
-    */
     $dates = DateTimeUtil::getDatesFromDaterange($daterange);
     $sql = "SELECT * FROM cntnd_booking WHERE datum between ':datum_von' AND ':datum_bis' ORDER BY datum, time_von";
     $values = array(
@@ -209,6 +205,34 @@ class CntndBooking {
     while ($this->db->next_record()) {
       $timestamp = strtotime($this->db->f('datum').' '.$this->db->f('time_von'));
       $data[$timestamp]=array('time_von'=>$this->db->f('time_von'),'time_bis'=>$this->db->f('time_bis'),'status'=>$this->db->f('status'));
+    }
+    return $data;
+  }
+
+  public function admin(){
+    /*
+    // ADMIN MODUS
+    $sql = "SELECT * FROM cntnd_reservation WHERE datum >= '".date("Y-m-d")."' ORDER BY datum, time_von";
+    */
+    $sql = "SELECT * FROM cntnd_booking WHERE datum >= ':datum' ORDER BY datum, time_von";
+    $values = array('datum' => date('Y-m-d'));
+    $this->db->query($sql, $values);
+    $data=[];
+    while ($this->db->next_record()) {
+      $data_detail = array(
+        'id'=>$this->db->f('id'),
+        'name'=>$this->db->f('name'),
+        'adresse'=>$this->db->f('adresse'),
+        'status'=>$this->db->f('status'),
+        'plz_ort'=>$this->db->f('plz_ort'),
+        'email'=>$this->db->f('email'),
+        'telefon'=>$this->db->f('telefon'),
+        'personen'=>$this->db->f('personen'),
+        'bemerkungen'=>$this->db->f('bemerkungen'),
+        'time_von'=>$this->db->f('time_von'),
+        'time_bis'=>$this->db->f('time_bis')
+      );
+      $data[date('d.m.Y',strtotime($this->db->f('datum')))][]=$data_detail;
     }
     return $data;
   }
