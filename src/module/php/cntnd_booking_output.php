@@ -71,15 +71,15 @@ if ($editmode){
         		<label for="bemerkungen">Bemerkungen</label>
         		<textarea name="bemerkungen" class="form-control"></textarea>
         	</div>
-          <button class="btn btn-primary">'.mi18n("SAVE").'</button>
-          <button class="btn btn-dark">'.mi18n("DELETE").'</button>
+          <button class="btn btn-primary" type="submit">'.mi18n("SAVE").'</button>
+          <button class="btn btn-dark cntnd_booking-admin-delete" type="button">'.mi18n("DELETE").'</button>
           <button class="btn cntnd_booking-admin-cancel" type="reset">'.mi18n("RESET").'</button>
           <input type="hidden" name="resid" />
-          <input type="hidden" name="action" />
+          <input type="hidden" name="action" value="save" />
           <div class="form-group">
             <span>'.mi18n("EMAIL").'</span>
             <div class="form-check form-check-inline">
-              <input id="email_senden" class="form-check-input" type="checkbox" name="email_senden" value="true" />
+              <input id="email_senden" class="form-check-input" type="checkbox" name="email_senden" value="true" checked />
               <label for="email_senden" class="form-check-label">'.mi18n("EMAIL_SEND").'</label>
             </div>
           </div>

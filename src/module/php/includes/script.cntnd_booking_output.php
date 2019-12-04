@@ -16,5 +16,19 @@ $(document).ready(function(){
     $('.cntnd_booking-admin-action').css('position','static');
     $('#cntnd_booking-admin input[name=resid]').val('');
   });
+
+  $('.cntnd_booking-admin-delete').click(function(){
+    $('#cntnd_booking-admin input[name=action]').val('delete');
+    $('#cntnd_booking-admin').submit();
+  });
+
+  $('#cntnd_booking-admin').submit(function() {
+    var resid = $('#cntnd_booking-admin input[name=resid]').val();
+    if (resid==''){
+      // todo message
+      return false;
+    }
+    return true;
+  });
 });
 </script>
