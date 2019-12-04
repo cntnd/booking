@@ -21,6 +21,6 @@ MORE=Mehr anzeigen
 LESS=Weniger anzeigen
 SUCCESS=Die Reservation wurde getätigt, sie erhalten in kürze eine Bestätigung per E-Mail.
 VALIDATION=Es gab ein Fehler:
-* Bitte füllen Sie alle Felder mit "*" aus
-* Bitte wählen Sie mindestens ein Zeitraum aus
-* Bitte erstellen Sie nur eine Reservation pro ausgewähltem Tag
+VALIDATION_REQUIRED=Bitte füllen Sie alle Felder mit "*" aus
+VALIDATION_DATES=Bitte wählen Sie mindestens ein Zeitraum aus
+VALIDATION_DAYS=Bitte erstellen Sie nur eine Reservation pro ausgewähltem Tag

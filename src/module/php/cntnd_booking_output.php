@@ -72,7 +72,14 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
   }
   // show messages
   $failureMsg=($failure) ? '' : 'hide';
-  echo '<div class="cntnd_alert cntnd_alert-danger cntnd_booking-validation '.$failureMsg.'">'.mi18n("VALIDATION").'</div>';
+  echo '<div class="cntnd_alert cntnd_alert-danger cntnd_booking-validation '.$failureMsg.'">';
+  echo mi18n("VALIDATION");
+  echo '<ul>';
+  echo '<li class="cntnd_booking-validation-required">'.mi18n("VALIDATION_REQUIRED").'</li>';
+  echo '<li class="cntnd_booking-validation-dates">'.mi18n("VALIDATION_DATES").'</li>';
+  echo '<li class="cntnd_booking-validation-days">'.mi18n("VALIDATION_DAYS").'</li>';
+  echo '</ul>';
+  echo '</div>';
   if ($success){
     echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("SUCCESS").'</div>';
   }
