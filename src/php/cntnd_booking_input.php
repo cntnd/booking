@@ -145,12 +145,5 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
     <label for="email"><?= mi18n("EMAIL") ?></label>
     <input id="email" type="email" name="CMS_VAR[6]" value="CMS_VALUE[6]" />
   </div>
-
-  <pre>
-    * email betreff (evtl. email name)
-    * min. dauer
-    * interval auch 15 minuten, 45, 75 (frei wählbar durch 5 teilbar)
-    * pausen zwischen den intervalen
-  </pre>
 </div>
 <?php
