@@ -106,6 +106,7 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
       <label for="blocked_day_sa" class="form-check-label"><?= mi18n("TIME_FROM") ?></label>
       <select class="form-check-input" name="CMS_VAR[4]" size="1">
       <?php
+          // todo 5 Minuten, 15, Minuten, ?? --> Timepicker
           for ($i=0;$i<48;$i++){
               $min=$i*30;
               $selected = "";
@@ -144,4 +145,11 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
     <label for="email"><?= mi18n("EMAIL") ?></label>
     <input id="email" type="email" name="CMS_VAR[6]" value="CMS_VALUE[6]" />
   </div>
+
+  <pre>
+    * min. dauer
+    * interval auch 15 minuten, 45, 75 (frei wählbar durch 5 teilbar)
+    * pausen zwischen den intervalen
+  </pre>
 </div>
+<?php

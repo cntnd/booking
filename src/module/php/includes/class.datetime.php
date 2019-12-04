@@ -103,6 +103,15 @@ class DateTimeUtil {
     }
   }
 
+  public static function isTimestamp($string){
+      try {
+          new DateTime('@' . $string);
+      } catch(Exception $e) {
+          return false;
+      }
+      return true;
+  }
+
   public static function getToWithInterval($from,$interval){
     return self::getReadableTime($from+$interval);
   }
@@ -126,5 +135,11 @@ class DateTimeUtil {
       return ($dt < $range);
     }
     return true;
+  }
+
+  public static function compare($date1,$date2){
+    $d1 = self::checkDateTime($date1);
+    $d2 = self::checkDateTime($date2);
+    return ($d1==$d2);
   }
 }

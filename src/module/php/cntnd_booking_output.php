@@ -51,7 +51,15 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
 
 //if (!$editmode){
   // PUBLIC
-  var_dump($_POST);
+  if ($_POST){
+    var_dump($_POST);
+    if (CntndBooking::validate($_POST,$interval)){
+      $success=true;
+    }
+    else {
+      $failure=true;
+    }
+  }
   echo '<div class="cntnd_booking">';
   echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation">';
   $booking->render();
@@ -63,17 +71,17 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
     echo '</div>';
   }
   // show messages
-  echo '<div class="cntnd_alert cntnd_alert-danger cntnd_booking-validation hide">'.mi18n("VALIDATION").'</div>';
+  $failureMsg=($failure) ? '' : 'hide';
+  echo '<div class="cntnd_alert cntnd_alert-danger cntnd_booking-validation '.$failureMsg.'">'.mi18n("VALIDATION").'</div>';
   if ($success){
     echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("SUCCESS").'</div>';
-  }
-  if ($failure){
-    echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("FAILURE").'</div>';
   }
   // use template to display formular
   $smarty->display('reservation-formular.html');
   echo '<button type="submit" class="btn btn-primary">'.mi18n("SAVE").'</button>';
   echo '<button type="reset" class="btn">'.mi18n("RESET").'</button>';
+  echo '<input type="hidden" name="required" id="cntnd_booking-required" />';
+  echo '<input type="hidden" name="fields" id="cntnd_booking-fields" />';
   echo '</form>';
   echo '</div>';
 //}

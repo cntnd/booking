@@ -20,5 +20,7 @@ RESET=Zurücksetzen
 MORE=Mehr anzeigen
 LESS=Weniger anzeigen
 SUCCESS=Die Reservation wurde getätigt, sie erhalten in kürze eine Bestätigung per E-Mail.
-FAILURE=Es gab ein Fehler, bitte wählen Sie mindestens einen Zeitraum aus.
-VALIDATION=Bitte alle Felder mit "*" ausfüllen und mindestens einen Zeitraum auswählen.
+VALIDATION=Es gab ein Fehler:
+* Bitte füllen Sie alle Felder mit "*" aus
+* Bitte wählen Sie mindestens ein Zeitraum aus
+* Bitte erstellen Sie nur eine Reservation pro ausgewähltem Tag

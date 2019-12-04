@@ -69,5 +69,52 @@ class CntndBooking {
     echo '</tbody>';
     echo '</table>';
   }
+
+  public static function validate($post,$interval){
+    if (is_array($post)){
+      var_dump(self::validateRequired($post));
+      return (self::validateDates($post,$interval) && self::validateRequired($post));
+    }
+    return false;
+  }
+
+  private static function validateDates($post,$interval){
+    $valid=false;
+    if (array_key_exists('dates',$post) && is_array($post['dates'])){
+      $valid=true;
+      $dates = $post['dates'];
+      $interval_ms = $interval*60; // interval is in sec and timestamp is in ms
+      sort($dates);
+      foreach ($dates as $date) {
+        if (!empty($old)){
+          $diff = $date-$old;
+          if ($diff>$interval_ms){
+            $valid=false;
+          }
+          if (date('d.m.Y',$old)!=date('d.m.Y',$date)){
+            $valid=false;
+          }
+        }
+        $old=$date;
+      }
+    }
+    return $valid;
+  }
+
+  private static function validateRequired($post){
+    $valid=false;
+    if (array_key_exists('required',$post)){
+      $valid=true;
+      $required = json_decode(base64_decode($post['required']), true);
+      if (is_array($required)){
+        foreach ($required as $value) {
+          if (empty($post[$value])){
+            $valid=false;
+          }
+        }
+      }
+    }
+    return $valid;
+  }
 }
 ?>
