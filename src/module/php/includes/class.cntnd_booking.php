@@ -167,6 +167,9 @@ class CntndBooking {
     $mailer = new cMailer();
     $smarty = cSmartyFrontend::getInstance();
     // use template to display email
+    $time_bis = new DateTime($dates['dat_email'].' '.$dates['time_bis']);
+    $time_bis->modify('+'.$this->interval.' minutes');
+
     $smarty->assign('dat_email', $dates['dat_email']);
     $smarty->assign('name', $post['name']);
     $smarty->assign('adresse', $post['adresse']);
@@ -176,31 +179,24 @@ class CntndBooking {
     $smarty->assign('email', $post['email']);
     $smarty->assign('personen', $post['personen']);
     $smarty->assign('time_von', $dates['time_von']);
-    $smarty->assign('time_bis', $dates['time_bis']);
-    $message = $smarty->fetch('reservation-mail.html');
-
+    $smarty->assign('time_bis', $time_bis->format('H:i'));
+    $body = $smarty->fetch('reservation-mail.html');
     // Create a message
     // todo betreff etc
-    $message = Swift_Message::newInstance('Ihre Reservation')
+    $mail = Swift_Message::newInstance('Ihre Reservation')
     ->setFrom($mailto)
     ->setTo($post['email'])
-    ->setBody($message, 'text/html');
+    ->setBody($body, 'text/html');
 
     // Send the message
-    $result = $mailer->send($message);
+    $result = $mailer->send($mail);
     return $result;
   }
 
   public function load($daterange){
     /*
-    if (!$editmode){
-            // PUBLIC
-        $sql = "SELECT * FROM cntnd_reservation WHERE datum between '".date("Y-m-d",strtotime($dat_von))."' AND '".date("Y-m-d",strtotime($dat_bis))."' ORDER BY datum, time_von";
-    }
-    else {
-            // ADMIN MODUS
-        $sql = "SELECT * FROM cntnd_reservation WHERE datum >= '".date("Y-m-d")."' ORDER BY datum, time_von";
-    }
+    // ADMIN MODUS
+    $sql = "SELECT * FROM cntnd_reservation WHERE datum >= '".date("Y-m-d")."' ORDER BY datum, time_von";
     */
     $dates = DateTimeUtil::getDatesFromDaterange($daterange);
     $sql = "SELECT * FROM cntnd_booking WHERE datum between ':datum_von' AND ':datum_bis' ORDER BY datum, time_von";
