@@ -146,8 +146,9 @@ class DateTimeUtil {
   public static function getInsertDates($dates){
     sort($dates);
     $datum = date("Y-m-d",$dates[0]);
+    $dat_email = date("d.m.Y",$dates[0]);
     $time_von = date("H:i",$dates[0]);
     $time_bis = date("H:i",end($dates));
-    return array('datum'=>$datum,'time_von'=>$time_von,'time_bis'=>$time_bis);
+    return array('datum'=>$datum,'dat_email'=>$dat_email,'time_von'=>$time_von,'time_bis'=>$time_bis);
   }
 }

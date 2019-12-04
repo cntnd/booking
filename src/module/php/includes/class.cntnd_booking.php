@@ -54,6 +54,7 @@ class CntndBooking {
       if (DateTimeUtil::isEvenWeek($date[0])){
         $class.=' even-dat';
       }
+      // todo was wenn Mo = blocked??
       if (DateTimeUtil::isMonday($date[0])){
         $class.=' kw-dat';
       }
@@ -155,7 +156,39 @@ class CntndBooking {
         'time_von'=> $dates['time_von'],
         'time_bis'=> $dates['time_bis']
     );
-    return $this->db->query($sql, $values);
+    if ($this->db->query($sql, $values)){
+      $this->confirmationEmail($post,$dates);
+      return true;
+    }
+    return false;
+  }
+
+  private function confirmationEmail($post,$dates){
+    $mailer = new cMailer();
+    $smarty = cSmartyFrontend::getInstance();
+    // use template to display email
+    $smarty->assign('dat_email', $dates['dat_email']);
+    $smarty->assign('name', $post['name']);
+    $smarty->assign('adresse', $post['adresse']);
+    $smarty->assign('plz_ort', $post['plz_ort']);
+    $smarty->assign('telefon', $post['telefon']);
+    $smarty->assign('bemerkungen', $post['bemerkungen']);
+    $smarty->assign('email', $post['email']);
+    $smarty->assign('personen', $post['personen']);
+    $smarty->assign('time_von', $dates['time_von']);
+    $smarty->assign('time_bis', $dates['time_bis']);
+    $message = $smarty->fetch('reservation-mail.html');
+
+    // Create a message
+    // todo betreff etc
+    $message = Swift_Message::newInstance('Ihre Reservation')
+    ->setFrom($mailto)
+    ->setTo($post['email'])
+    ->setBody($message, 'text/html');
+
+    // Send the message
+    $result = $mailer->send($message);
+    return $result;
   }
 
   public function load($daterange){

@@ -147,6 +147,7 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
   </div>
 
   <pre>
+    * email betreff (evtl. email name)
     * min. dauer
     * interval auch 15 minuten, 45, 75 (frei wählbar durch 5 teilbar)
     * pausen zwischen den intervalen
