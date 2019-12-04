@@ -6,8 +6,6 @@ defined('CON_FRAMEWORK') || die('Illegal call: Missing framework initialization 
 
 // editmode and more
 $editmode = cRegistry::isBackendEditMode();
-$smarty = cSmartyFrontend::getInstance();
-$mailer = new cMailer();
 
 // input/vars
 $daterange = "CMS_VALUE[1]";
@@ -32,7 +30,7 @@ if ($editmode){
   cInclude('module', 'includes/script.cntnd_booking_output.php');
 }
 
-// values
+// other/vars
 $booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client);
 
 if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty($interval)){
@@ -50,6 +48,7 @@ if ($editmode){
   // ADMIN
   if ($_POST){
     var_dump($_POST);
+    // todo validation and then persist
   }
 	echo '<div class="content_box cntnd_booking"><label class="content_type_label">'.mi18n("MODULE").'</label>';
   echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("ADMIN_MODE").'</div>';
@@ -66,6 +65,7 @@ if ($editmode){
     <h5>'.mi18n("ADMIN_ACTION").'</h5>
     <div class="form-vertical card">
       <div class="card-body">
+        <!-- todo messages -->
         <form method="post" id="cntnd_booking-admin" name="cntnd_booking-admin">
           <div class="form-group">
         		<label for="bemerkungen">Bemerkungen</label>

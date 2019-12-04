@@ -1,1 +1,0 @@
--- DROP TABLE cntnd_reservation;

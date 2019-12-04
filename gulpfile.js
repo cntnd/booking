@@ -7,12 +7,12 @@ var del         = require('del');
 var pkg         = require('./package.json');
 
 gulp.task('watch', function () {
-    gulp.watch('src/module/scss/**/*.scss', gulp.series('sass'));
+    gulp.watch('src/scss/**/*.scss', gulp.series('sass'));
 });
 
 // Compile sass into CSS
 gulp.task('sass', function() {
-    return gulp.src('src/module/scss/**/*.scss')
+    return gulp.src('src/scss/**/*.scss')
         .pipe(sass())
         .pipe(minify({
           minify: true,
@@ -22,13 +22,13 @@ gulp.task('sass', function() {
               return m && m.join('\n') + '\n' || '';
           }
         }))
-        .pipe(gulp.dest("src/module/css/"));
+        .pipe(gulp.dest("src/css/"));
 });
 
 gulp.task('zip', function() {
-  return gulp.src(['src/module/**/*','!src/module/scss*'])
+  return gulp.src(['src/**/*','!src/scss*'])
   		.pipe(zip('cntnd_booking.zip'))
-  		.pipe(gulp.dest('dist/module/'));
+  		.pipe(gulp.dest('dist/'));
 });
 
 gulp.task('clean', function () {
@@ -54,30 +54,9 @@ gulp.task('info-xml', function () {
         '</module>';
 
     return file('info.xml', infoXml, {src: true})
-        .pipe(gulp.dest('src/module/'));
+        .pipe(gulp.dest('src/'));
 });
-
-// creates plugin.xml
-gulp.task('plugin-xml', function () {
-    var pluginXml =
-        '<general active="1">\n' +
-                '<plugin_name>'+pkg.name+'</plugin_name>\n' +
-                '<plugin_foldername>'+pkg.name+'</plugin_foldername>\n' +
-                '<uuid>592369BC-2643-9A6F-5445-5CD465D60056</uuid>\n' +
-                '<description>'+pkg.description+'</description>\n' +
-                '<author>'+pkg.author+'</author>\n' +
-                '<copyright>thomas@dasco.li</copyright>\n' +
-                '<mail>thomas@dasco.li</mail>\n' +
-                '<website>'+pkg.homepage+'</website>\n' +
-                '<version>'+pkg.version+'</version>\n' +
-        '</general>';
-
-    return file('plugin.xml', pluginXml, {src: true})
-        .pipe(gulp.dest('src/plugin/'));
-});
-
-gulp.task('xml', gulp.series('info-xml'));
 
 gulp.task('default', gulp.series('sass','watch'));
 
-gulp.task('dist', gulp.series('clean','sass','xml','zip'));
+gulp.task('dist', gulp.series('clean','sass','info-xml','zip'));
