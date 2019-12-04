@@ -142,4 +142,12 @@ class DateTimeUtil {
     $d2 = self::checkDateTime($date2);
     return ($d1==$d2);
   }
+
+  public static function getInsertDates($dates){
+    sort($dates);
+    $datum = date("Y-m-d",$dates[0]);
+    $time_von = date("H:i",$dates[0]);
+    $time_bis = date("H:i",end($dates));
+    return array('datum'=>$datum,'time_von'=>$time_von,'time_bis'=>$time_bis);
+  }
 }

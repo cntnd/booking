@@ -33,10 +33,7 @@ if ($editmode){
 }
 
 // values
-$booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days);
-$interval_check = ($interval * 60); // todo ??
-
-$error=false;
+$booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client);
 
 if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty($interval)){
   echo '<div class="cntnd_alert cntnd_alert-primary">';
@@ -52,9 +49,9 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
 //if (!$editmode){
   // PUBLIC
   if ($_POST){
-    var_dump($_POST);
     if (CntndBooking::validate($_POST,$interval)){
-      $success=true;
+      $success=$booking->store($_POST,$interval);
+      $error=!$success;
     }
     else {
       $failure=true;
@@ -82,6 +79,9 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
   echo '</div>';
   if ($success){
     echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("SUCCESS").'</div>';
+  }
+  if ($error){
+    echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("FAILURE").'</div>';
   }
   // use template to display formular
   $smarty->display('reservation-formular.html');

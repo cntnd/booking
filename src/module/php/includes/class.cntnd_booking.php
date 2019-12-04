@@ -13,7 +13,11 @@ class CntndBooking {
   private $mailto;
   private $blocked_days;
 
-  function __construct($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days) {
+  private $db;
+  private $client;
+  private $lang;
+
+  function __construct($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client) {
     $this->daterange=$daterange;
     $this->show_daterange=$show_daterange;
     $this->interval=$interval;
@@ -21,6 +25,10 @@ class CntndBooking {
     $this->timerange_to=$timerange_to;
     $this->mailto=$mailto;
     $this->blocked_days=$blocked_days;
+
+    $this->db = new cDb;
+    $this->client = $client;
+    $this->lang = $lang;
   }
 
   public function daterange(){
@@ -30,6 +38,7 @@ class CntndBooking {
   public function render(){
     $timerange = DateTimeUtil::getTimerange($this->timerange_from, $this->timerange_to, $this->interval);
     $daterange = DateTimeUtil::getDaterange($this->daterange,$this->blocked_days);
+    $data = $this->load($this->daterange);
 
     echo '<table class="table">';
     echo '<thead><tr>';
@@ -57,10 +66,22 @@ class CntndBooking {
       echo '<tr class="'.$class.'"">';
       echo '<th scope="row"><nobr class="cntnd_booking-date" data-date="'.$date[0].'">'.$date[1].'</nobr></th>';
       foreach ($timerange as $time) {
+        $disabled='';
         $timestamp = strtotime($date[0].' '.$time[1]);
-        echo '<td class="free">';
+        if (array_key_exists($timestamp,$data)){
+          $status = $data[$timestamp]['status'];
+          $until = strtotime($date[0].' '.$data[$timestamp]['time_bis']);
+        }
+        else if (empty($until) || $timestamp>$until){
+          $status = 'free';
+          unset($until);
+        }
+        if ($status!='free'){
+          $disabled='disabled="disabled"';
+        }
+        echo '<td class="'.$status.'">';
         echo '<label for="'.$timestamp.'" class="res_checkbox">';
-        echo '<input id="'.$timestamp.'" class="cntnd_booking-checkbox" name="dates[]" type="checkbox" value="'.$timestamp.'" />';
+        echo '<input id="'.$timestamp.'" class="cntnd_booking-checkbox" name="dates[]" type="checkbox" value="'.$timestamp.'" '.$disabled.' />';
         echo '</label>';
         echo '</td>';
       }
@@ -72,7 +93,6 @@ class CntndBooking {
 
   public static function validate($post,$interval){
     if (is_array($post)){
-      var_dump(self::validateRequired($post));
       return (self::validateDates($post,$interval) && self::validateRequired($post));
     }
     return false;
@@ -115,6 +135,53 @@ class CntndBooking {
       }
     }
     return $valid;
+  }
+
+  public function store($post){
+    $dates = DateTimeUtil::getInsertDates($post['dates']);
+    $sql = "INSERT INTO cntnd_booking (idclient, idlang, name, adresse, plz_ort, email, telefon, personen, bemerkungen, status, datum, time_von, time_bis) VALUES (:idclient, :idlang, ':name', ':adresse', ':plz_ort', ':email', ':telefon', :personen, ':bemerkungen', ':status', ':datum', ':time_von', ':time_bis')";
+    $values = array(
+        'idclient' => cSecurity::toInteger($this->client),
+        'idlang' => cSecurity::toInteger($this->lang),
+        'name'=> $this->db->escape($post['name']),
+        'adresse'=> $this->db->escape($post['adresse']),
+        'plz_ort'=> $this->db->escape($post['plz_ort']),
+        'email'=> $this->db->escape($post['email']),
+        'telefon'=> $this->db->escape($post['telefon']),
+        'personen'=> cSecurity::toInteger($post['personen']),
+        'bemerkungen'=> $this->db->escape($post['bemerkungen']),
+        'status'=> 'blocked',
+        'datum'=> $dates['datum'],
+        'time_von'=> $dates['time_von'],
+        'time_bis'=> $dates['time_bis']
+    );
+    return $this->db->query($sql, $values);
+  }
+
+  public function load($daterange){
+    /*
+    if (!$editmode){
+            // PUBLIC
+        $sql = "SELECT * FROM cntnd_reservation WHERE datum between '".date("Y-m-d",strtotime($dat_von))."' AND '".date("Y-m-d",strtotime($dat_bis))."' ORDER BY datum, time_von";
+    }
+    else {
+            // ADMIN MODUS
+        $sql = "SELECT * FROM cntnd_reservation WHERE datum >= '".date("Y-m-d")."' ORDER BY datum, time_von";
+    }
+    */
+    $dates = DateTimeUtil::getDatesFromDaterange($daterange);
+    $sql = "SELECT * FROM cntnd_booking WHERE datum between ':datum_von' AND ':datum_bis' ORDER BY datum, time_von";
+    $values = array(
+      'datum_von' => $dates[0]->format('Y-m-d'),
+      'datum_bis' => $dates[1]->format('Y-m-d')
+    );
+    $this->db->query($sql, $values);
+    $data=[];
+    while ($this->db->next_record()) {
+      $timestamp = strtotime($this->db->f('datum').' '.$this->db->f('time_von'));
+      $data[$timestamp]=array('time_von'=>$this->db->f('time_von'),'time_bis'=>$this->db->f('time_bis'),'status'=>$this->db->f('status'));
+    }
+    return $data;
   }
 }
 ?>

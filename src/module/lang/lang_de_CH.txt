@@ -20,6 +20,7 @@ RESET=Zurücksetzen
 MORE=Mehr anzeigen
 LESS=Weniger anzeigen
 SUCCESS=Die Reservation wurde getätigt, sie erhalten in kürze eine Bestätigung per E-Mail.
+FAILURE=Es gab ein Fehler, ihre Reservation wurde nicht gespeichert. Bitte versuchen Sie es erneut.
 VALIDATION=Es gab ein Fehler:
 VALIDATION_REQUIRED=Bitte füllen Sie alle Felder mit "*" aus
 VALIDATION_DATES=Bitte wählen Sie mindestens ein Zeitraum aus

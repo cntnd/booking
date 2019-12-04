@@ -8,10 +8,10 @@ $(document).ready(function(){
   $('.res_checkbox').click(function(){
     var res = $(this).children('input');
     if (res.is(':checked')){
-      $(this).parents('td').addClass('reserved');
+      $(this).parents('td').addClass('blocked');
     }
     else {
-      $(this).parents('td').removeClass('reserved');
+      $(this).parents('td').removeClass('blocked');
     }
   });
 
@@ -66,7 +66,7 @@ $(document).ready(function(){
   }
 
   $('#cntnd_booking-reservation').submit(function() {
-    $('.cntnd_booking-validation').addClass('hide');  
+    $('.cntnd_booking-validation').addClass('hide');
     $('.cntnd_booking-validation-required').hide();
     $('.cntnd_booking-validation-dates').hide();
     $('.cntnd_booking-validation-days').hide();
