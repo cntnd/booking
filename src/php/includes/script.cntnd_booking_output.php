@@ -9,12 +9,14 @@ $(document).ready(function(){
     admin.css('position','absolute').css('top',(res.position().top-offset));
     res.addClass('focus');
     $('#cntnd_booking-admin input[name=resid]').val(res.data('resid'));
+    showTimeslot(res.data('timeslot'));
   });
 
   $('.cntnd_booking-admin-cancel').click(function(){
     $('.card.cntnd_booking').removeClass('focus');
     $('.cntnd_booking-admin-action').css('position','static');
     $('#cntnd_booking-admin input[name=resid]').val('');
+    hideTimeslot();
   });
 
   $('.cntnd_booking-admin-delete').click(function(){
@@ -25,10 +27,21 @@ $(document).ready(function(){
   $('#cntnd_booking-admin').submit(function() {
     var resid = $('#cntnd_booking-admin input[name=resid]').val();
     if (resid==''){
-      // todo message
+      $('.cntnd_booking-admin-error').removeClass('hide');
       return false;
     }
+    hideTimeslot();
     return true;
   });
+
+  function showTimeslot(timeslot){
+    $('.cntnd_booking-admin-timeslot > .timeslot').text(timeslot);
+    $('.cntnd_booking-admin-timeslot').removeClass('hide');
+  }
+
+  function hideTimeslot(){
+    $('.cntnd_booking-admin-timeslot > .timeslot').text('');
+    $('.cntnd_booking-admin-timeslot').addClass('hide');
+  }
 });
 </script>

@@ -66,6 +66,11 @@ class DateTimeUtil {
     return sprintf("%02d:%02d", $time[0], $time[1]);
   }
 
+  public static function getReadableTimeFromDate($date){
+    $dt = self::checkDateTime($date);
+    return $dt->format('H:i');
+  }
+
   public static function isEvenWeek($date){
     $dt = new DateTime($date);
     return ($dt->format('W') % 2 == 0);
@@ -146,7 +151,7 @@ class DateTimeUtil {
   public static function getInsertDates($dates){
     sort($dates);
     $datum = date("Y-m-d",$dates[0]);
-    $dat_email = date("d.m.Y",$dates[0]);
+    $dat_email = self::getReadableDate($dates[0]);
     $time_von = date("H:i",$dates[0]);
     $time_bis = date("H:i",end($dates));
     return array('datum'=>$datum,'dat_email'=>$dat_email,'time_von'=>$time_von,'time_bis'=>$time_bis);

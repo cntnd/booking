@@ -47,16 +47,28 @@ if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty
 if ($editmode){
   // ADMIN
   if ($_POST){
-    var_dump($_POST);
-    // todo validation and then persist
+    if (CntndBooking::validateUpdate($_POST)){
+      $admin_success=$booking->update($_POST);
+    }
+    else {
+      $admin_error=true;
+    }
   }
 	echo '<div class="content_box cntnd_booking"><label class="content_type_label">'.mi18n("MODULE").'</label>';
   echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("ADMIN_MODE").'</div>';
+  if ($admin_success){
+    echo '<hr />';
+    echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("ADMIN_SUCCESS").'</div>';
+  }
+  if ($admin_error){
+    echo '<hr />';
+    echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("ADMIN_FAILURE").'</div>';
+  }
   echo '<div class="d-flex ">';
 
   echo '<div class="w-50 pr-10">';
   $smarty = cSmartyFrontend::getInstance();
-  $smarty->assign('data', $booking->admin());
+  $smarty->assign('data', $booking->listAll());
   $smarty->display('admin-liste.html');
   echo '</div>';
 
@@ -65,8 +77,11 @@ if ($editmode){
     <h5>'.mi18n("ADMIN_ACTION").'</h5>
     <div class="form-vertical card">
       <div class="card-body">
-        <!-- todo messages -->
+        <div class="cntnd_booking-admin-error cntnd_alert cntnd_alert-primary hide">'.mi18n("ADMIN_SUBMIT_ERROR").'</div>
         <form method="post" id="cntnd_booking-admin" name="cntnd_booking-admin">
+          <div class="cntnd_booking-admin-timeslot hide">
+            <span class="timeslot"></span>
+          </div>
           <div class="form-group">
         		<label for="bemerkungen">Bemerkungen</label>
         		<textarea name="bemerkungen" class="form-control"></textarea>

@@ -157,13 +157,13 @@ class CntndBooking {
         'time_bis'=> $dates['time_bis']
     );
     if ($this->db->query($sql, $values)){
-      $this->confirmationEmail($post,$dates);
+      $this->informationEmail($post,$dates);
       return true;
     }
     return false;
   }
 
-  private function confirmationEmail($post,$dates){
+  private function informationEmail($post,$dates){
     $mailer = new cMailer();
     $smarty = cSmartyFrontend::getInstance();
     // use template to display email
@@ -209,11 +209,14 @@ class CntndBooking {
     return $data;
   }
 
-  public function admin(){
-    /*
-    // ADMIN MODUS
-    $sql = "SELECT * FROM cntnd_reservation WHERE datum >= '".date("Y-m-d")."' ORDER BY datum, time_von";
-    */
+  public function loadById($id){
+    $sql = "SELECT * FROM cntnd_booking WHERE id = :id";
+    $values = array('id' => $id);
+    $this->db->query($sql, $values);
+    return $this->db->getResultObject();
+  }
+
+  public function listAll(){
     $sql = "SELECT * FROM cntnd_booking WHERE datum >= ':datum' ORDER BY datum, time_von";
     $values = array('datum' => date('Y-m-d'));
     $this->db->query($sql, $values);
@@ -235,6 +238,75 @@ class CntndBooking {
       $data[date('d.m.Y',strtotime($this->db->f('datum')))][]=$data_detail;
     }
     return $data;
+  }
+
+  public static function validateUpdate($post){
+    if (is_array($post)){
+      if (array_key_exists('resid',$post) && array_key_exists('action',$post)){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public function update($post){
+    if ($post['action']=='delete'){
+      $sql = "DELETE FROM cntnd_booking WHERE id = :id";
+      $values = array('id' => $post['resid']);
+      $this->rejectionEmail($post);
+    }
+    else {
+      $sql = "UPDATE cntnd_booking SET status = ':status', mut_dat = NOW() WHERE id = :id";
+      $values = array(
+        'status' => 'reserved',
+        'id' => $post['resid']);
+      $this->confirmationEmail($post);
+    }
+    return $this->db->query($sql, $values);
+  }
+
+  private function confirmationEmail($post){
+    $mailer = new cMailer();
+    $smarty = cSmartyFrontend::getInstance();
+    // use template to display email
+    $record = $this->loadById($post['resid']);
+    $smarty->assign('datum', DateTimeUtil::getReadableDate($record->datum));
+    $smarty->assign('time_von', DateTimeUtil::getReadableTimeFromDate($record->time_von));
+    $smarty->assign('time_bis', DateTimeUtil::getReadableTimeFromDate($record->time_bis));
+    $smarty->assign('bemerkungen', $record->bemerkungen);
+    $smarty->assign('message', $post['bemerkungen']);
+    $body = $smarty->fetch('reservation-definitiv-mail.html');
+    // Create a message
+    $mail = Swift_Message::newInstance('Ihre Reservationsbestätigung')
+    ->setFrom($mailto)
+    ->setTo($post['email'])
+    ->setBody($body, 'text/html');
+
+    // Send the message
+    $result = $mailer->send($mail);
+    return $result;
+  }
+
+  private function rejectionEmail($post){
+    $mailer = new cMailer();
+    $smarty = cSmartyFrontend::getInstance();
+    // use template to display email
+    $record = $this->loadById($post['resid']);
+    $smarty->assign('datum', DateTimeUtil::getReadableDate($record->datum));
+    $smarty->assign('time_von', DateTimeUtil::getReadableTimeFromDate($record->time_von));
+    $smarty->assign('time_bis', DateTimeUtil::getReadableTimeFromDate($record->time_bis));
+    $smarty->assign('bemerkungen', $record->bemerkungen);
+    $smarty->assign('message', $post['bemerkungen']);
+    $body = $smarty->fetch('reservation-abgelehnt-mail.html');
+    // Create a message
+    $mail = Swift_Message::newInstance('Ablehnung ihrer Reservation')
+    ->setFrom($mailto)
+    ->setTo($post['email'])
+    ->setBody($body, 'text/html');
+
+    // Send the message
+    $result = $mailer->send($mail);
+    return $result;
   }
 }
 ?>
