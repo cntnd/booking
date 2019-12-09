@@ -31,6 +31,7 @@ if ($editmode){
 }
 
 // other/vars
+$smarty = cSmartyFrontend::getInstance();
 $booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client);
 
 if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty($interval)){
@@ -67,7 +68,6 @@ if ($editmode){
   echo '<div class="d-flex ">';
 
   echo '<div class="w-50 pr-10">';
-  $smarty = cSmartyFrontend::getInstance();
   $smarty->assign('data', $booking->listAll());
   $smarty->display('admin-liste.html');
   echo '</div>';
