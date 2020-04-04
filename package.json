@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Reservationssystem",
   "devDependencies": {
+    "kind-of": ">=6.0.3",
     "del": "^5.1.0",
     "gulp": "^4.0.2",
     "gulp-minifier": "^2.0.0",
