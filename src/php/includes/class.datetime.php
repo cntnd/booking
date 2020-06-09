@@ -156,4 +156,18 @@ class DateTimeUtil {
     $time_bis = date("H:i",end($dates));
     return array('datum'=>$datum,'dat_email'=>$dat_email,'time_von'=>$time_von,'time_bis'=>$time_bis);
   }
+
+  // CALENDAR
+
+  public static function getDateFromRange($month){
+      $now = new DateTime('NOW');
+      $now->modify('-'.$month.' month');
+      $start = new DateTime();
+      $start->setDate($now->format('Y'), $now->format('m'), 1);
+      return $start;
+  }
+
+  public static function dateToInt($date){
+      return str_replace("-", "", $date);
+  }
 }

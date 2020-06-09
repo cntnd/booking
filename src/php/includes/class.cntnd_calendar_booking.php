@@ -1,144 +1,71 @@
 <?php
+cInclude('module', 'includes/class.cntnd_util.php');
 cInclude('module', 'includes/class.datetime.php');
-/**
- * cntnd_booking Class
- */
-class CntndBooking {
 
-  private $daterange;
-  private $show_daterange;
-  private $interval;
-  private $timerange_from;
-  private $timerange_to;
+/**
+ * cntnd_calendar_booking Class
+ */
+class CntndCalendarBooking {
+
   private $mailto;
-  private $blocked_days;
 
   private $db;
   private $client;
   private $lang;
 
-  function __construct($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client) {
-    $this->daterange=$daterange;
-    $this->show_daterange=$show_daterange;
-    $this->interval=$interval;
-    $this->timerange_from=$timerange_from;
-    $this->timerange_to=$timerange_to;
+  function __construct($mailto, $lang, $client) {
     $this->mailto=$mailto;
-    $this->blocked_days=$blocked_days;
 
     $this->db = new cDb;
     $this->client = $client;
     $this->lang = $lang;
   }
 
-  public function daterange(){
-    return $this->daterange;
+  public function load($daterange){
+    $start = DateTimeUtil::getDateFromRange($daterange);
+    $sql = "SELECT * FROM cntnd_calendar_booking WHERE start_date >= ':datum_von' ORDER BY start_date, end_date";
+    $values = array(
+      'datum_von' => $start->format('Y-m-d')
+    );
+    $this->db->query($sql, $values);
+    $data=[];
+    while ($this->db->next_record()) {
+      $data = $this->generateDates($data, $this->db->f("start_date"), $this->db->f("end_date"), $this->db->f("uname"));
+    }
+    return $data;
   }
 
-  public function render(){
-    $timerange = DateTimeUtil::getTimerange($this->timerange_from, $this->timerange_to, $this->interval);
-    $daterange = DateTimeUtil::getDaterange($this->daterange,$this->blocked_days);
-    $data = $this->load($this->daterange);
+  private function generateDates($data, $startDate, $endDate, $uname){
+    $date = new DateTime($startDate);
+    $start = DateTimeUtil::dateToInt($startDate);
+    $end = DateTimeUtil::dateToInt($endDate);
+    while($start<=$end){
+      $isStartDate = ($start==DateTimeUtil::dateToInt($startDate));
+      $isEndDate = ($start==$end);
+      $description = $uname;
 
-    echo '<table class="table">';
-    echo '<thead><tr>';
-    echo '<th>Datum</th>';
-    foreach ($timerange as $time) {
-      $to = DateTimeUtil::getToWithInterval($time[0],$this->interval);
-      echo '<th>'.$time[1].'<span class="separator">-</span>'.$to.'</th>';
-    }
-    echo '</tr></thead>';
-    echo '<tbody>';
-    foreach ($daterange as $date) {
-      $class='res_hide';
-      if (DateTimeUtil::isEvenWeek($date[0])){
-        $class.=' even-dat';
+      if (array_key_exists($date->format('Y-m-d'), $data)){
+        $isEndDate = $data[$date->format('Y-m-d')]["endDate"];
+        $description = $data[$date->format('Y-m-d')]["description"]." & ".$uname;
       }
-      // todo was wenn Mo = blocked??
-      if (DateTimeUtil::isMonday($date[0])){
-        $class.=' kw-dat';
-      }
-      if (!DateTimeUtil::isInShowRange($this->daterange,$this->show_daterange,$date[0])){
-        $class.=' not-in-range hide';
-      }
-      else {
-        $class.=' in-range';
-      }
-      echo '<tr class="'.$class.'"">';
-      echo '<th scope="row"><nobr class="cntnd_booking-date" data-date="'.$date[0].'">'.$date[1].'</nobr></th>';
-      foreach ($timerange as $time) {
-        $disabled='';
-        $timestamp = strtotime($date[0].' '.$time[1]);
-        if (array_key_exists($timestamp,$data)){
-          $status = $data[$timestamp]['status'];
-          $until = strtotime($date[0].' '.$data[$timestamp]['time_bis']);
-        }
-        else if (empty($until) || $timestamp>$until){
-          $status = 'free';
-          unset($until);
-        }
-        if ($status!='free'){
-          $disabled='disabled="disabled"';
-        }
-        echo '<td class="'.$status.'">';
-        echo '<label for="'.$timestamp.'" class="res_checkbox">';
-        echo '<input id="'.$timestamp.'" class="cntnd_booking-checkbox" name="dates[]" type="checkbox" value="'.$timestamp.'" '.$disabled.' />';
-        echo '</label>';
-        echo '</td>';
-      }
-      echo '</tr>';
-    }
-    echo '</tbody>';
-    echo '</table>';
-  }
 
-  public static function validate($post,$interval){
-    if (is_array($post)){
-      return (self::validateDates($post,$interval) && self::validateRequired($post));
-    }
-    return false;
-  }
+      $data[$date->format('Y-m-d')] = array(
+          "date" =>  $date->format('Y-m-d'),
+          "startDate" =>  $isStartDate,
+          "endDate" =>  $isEndDate,
+          "isBooking" =>  true,
+          "description" =>  $description
+      );
 
-  private static function validateDates($post,$interval){
-    $valid=false;
-    if (array_key_exists('dates',$post) && is_array($post['dates'])){
-      $valid=true;
-      $dates = $post['dates'];
-      $interval_ms = $interval*60; // interval is in sec and timestamp is in ms
-      sort($dates);
-      foreach ($dates as $date) {
-        if (!empty($old)){
-          $diff = $date-$old;
-          if ($diff>$interval_ms){
-            $valid=false;
-          }
-          if (date('d.m.Y',$old)!=date('d.m.Y',$date)){
-            $valid=false;
-          }
-        }
-        $old=$date;
-      }
+      $date->modify('+1 day');
+      $start = DateTimeUtil::dateToInt($date->format('Y-m-d'));
     }
-    return $valid;
-  }
 
-  private static function validateRequired($post){
-    $valid=false;
-    if (array_key_exists('required',$post)){
-      $valid=true;
-      $required = json_decode(base64_decode($post['required']), true);
-      if (is_array($required)){
-        foreach ($required as $value) {
-          if (empty($post[$value])){
-            $valid=false;
-          }
-        }
-      }
-    }
-    return $valid;
+    return $data;
   }
 
   public function store($post){
+    /*
     $dates = DateTimeUtil::getInsertDates($post['dates']);
     $sql = "INSERT INTO cntnd_booking (idclient, idlang, name, adresse, plz_ort, email, telefon, personen, bemerkungen, status, datum, time_von, time_bis) VALUES (:idclient, :idlang, ':name', ':adresse', ':plz_ort', ':email', ':telefon', :personen, ':bemerkungen', ':status', ':datum', ':time_von', ':time_bis')";
     $values = array(
@@ -161,6 +88,7 @@ class CntndBooking {
       return true;
     }
     return false;
+    */
   }
 
   private function informationEmail($post,$dates){
@@ -184,29 +112,13 @@ class CntndBooking {
     // Create a message
     // todo betreff etc
     $mail = Swift_Message::newInstance('Ihre Reservation')
-    ->setFrom($mailto)
+    ->setFrom($this->mailto)
     ->setTo($post['email'])
     ->setBody($body, 'text/html');
 
     // Send the message
     $result = $mailer->send($mail);
     return $result;
-  }
-
-  public function load($daterange){
-    $dates = DateTimeUtil::getDatesFromDaterange($daterange);
-    $sql = "SELECT * FROM cntnd_booking WHERE datum between ':datum_von' AND ':datum_bis' ORDER BY datum, time_von";
-    $values = array(
-      'datum_von' => $dates[0]->format('Y-m-d'),
-      'datum_bis' => $dates[1]->format('Y-m-d')
-    );
-    $this->db->query($sql, $values);
-    $data=[];
-    while ($this->db->next_record()) {
-      $timestamp = strtotime($this->db->f('datum').' '.$this->db->f('time_von'));
-      $data[$timestamp]=array('time_von'=>$this->db->f('time_von'),'time_bis'=>$this->db->f('time_bis'),'status'=>$this->db->f('status'));
-    }
-    return $data;
   }
 
   public function loadById($id){
@@ -250,6 +162,7 @@ class CntndBooking {
   }
 
   public function update($post){
+    /*
     if ($post['action']=='delete'){
       $sql = "DELETE FROM cntnd_booking WHERE id = :id";
       $values = array('id' => $post['resid']);
@@ -263,6 +176,7 @@ class CntndBooking {
       $this->confirmationEmail($post);
     }
     return $this->db->query($sql, $values);
+    */
   }
 
   private function confirmationEmail($post){
@@ -278,7 +192,7 @@ class CntndBooking {
     $body = $smarty->fetch('reservation-definitiv-mail.html');
     // Create a message
     $mail = Swift_Message::newInstance('Ihre Reservationsbestätigung')
-    ->setFrom($mailto)
+    ->setFrom($this->mailto)
     ->setTo($post['email'])
     ->setBody($body, 'text/html');
 
@@ -300,7 +214,7 @@ class CntndBooking {
     $body = $smarty->fetch('reservation-abgelehnt-mail.html');
     // Create a message
     $mail = Swift_Message::newInstance('Ablehnung ihrer Reservation')
-    ->setFrom($mailto)
+    ->setFrom($this->mailto)
     ->setTo($post['email'])
     ->setBody($body, 'text/html');
 

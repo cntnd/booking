@@ -1,0 +1,15 @@
+<p>
+    Anreise: <span class="tooltip" data-tippy-content="Tooltip" data-bind="text: reservation().start"></span>
+</p>
+
+<p>
+    Abreise: <span data-bind="text: reservation().end"></span>
+</p>
+
+<input type="hidden" name="reservation" data-bind="value: reservation().reservation" />
+<input type="hidden" name="user" value="TEST" />
+
+<p>
+    <button class="btn btn-primary">Save</button>
+    <button class="btn btn-light" data-bind="click: reset">Cancel</button>
+</p>

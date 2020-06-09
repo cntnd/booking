@@ -1,0 +1,34 @@
+<div class="calendar-container">
+
+            <div class="calendar__headers">
+                <a class="btn btn--left btn-icon material-icons" data-bind="click: currentMonth">today</a>
+                <a class="btn btn-icon material-icons" data-bind="click: previousMonth">chevron_left</a>
+                <strong class="month" data-bind="text: month"></strong>
+                <a class="btn btn-icon material-icons" data-bind="click: nextMonth">chevron_right</a>
+            </div>
+
+            <div class="calendar">
+
+                <span class="day weekday">Mo</span>
+                <span class="day weekday">Di</span>
+                <span class="day weekday">Mi</span>
+                <span class="day weekday">Do</span>
+                <span class="day weekday">Fr</span>
+                <span class="day weekday weekend">Sa</span>
+                <span class="day weekday weekend">So</span>
+
+                <!-- ko foreach: dates -->
+
+
+                <span class="day" data-bind="class: $parent.isCurrentMonth(date()), click: $parent.book, tooltip: description()">
+                  <span class="day__of-month" data-bind="dayOfMonth: date()"></span>
+
+                  <div class="booking" data-bind="class: $parent.hasBookingEnd($data)"></div>
+                  <div class="booking" data-bind="class: $parent.hasBookingStart($data)"></div>
+                </span>
+                <!-- /ko -->
+
+            </div>
+
+
+    </div>
