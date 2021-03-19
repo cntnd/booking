@@ -31,8 +31,13 @@ gulp.task('zip', function() {
   		.pipe(gulp.dest('dist/'));
 });
 
+gulp.task('xampp', function () {
+    return gulp.src(['src/**/*','!src/scss*'])
+        .pipe(gulp.dest('modules/'+pkg.name));
+});
+
 gulp.task('clean', function () {
-  return del('dist/**/*');
+    return del(['dist/**/*','modules/**/*']);
 });
 
 // creates info.xml
@@ -60,3 +65,5 @@ gulp.task('info-xml', function () {
 gulp.task('default', gulp.series('sass','watch'));
 
 gulp.task('dist', gulp.series('clean','sass','info-xml','zip'));
+
+gulp.task('module', gulp.series('clean','sass','info-xml','xampp'));
