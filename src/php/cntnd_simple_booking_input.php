@@ -25,8 +25,8 @@ if (empty($interval) || empty($timerange_from)){
 
 // includes
 cInclude('module', 'includes/class.datetime.php');
-cInclude('module', 'includes/script.cntnd_booking_input.php');
-cInclude('module', 'includes/style.cntnd_booking_input.php');
+cInclude('module', 'includes/script.cntnd_simple_booking_input.php');
+cInclude('module', 'includes/style.cntnd_simple_booking_input.php');
 ?>
 <div class="form-vertical">
   <div class="form-group">

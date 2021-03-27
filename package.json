@@ -1,7 +1,7 @@
 {
-  "name": "cntnd_booking",
+  "name": "cntnd_simple_booking",
   "version": "1.0.0",
-  "description": "Reservationssystem",
+  "description": "Reservationssystem (Simpel)",
   "devDependencies": {
     "del": "^5.1.0",
     "gulp": "^4.0.2",

@@ -25,16 +25,21 @@ $blocked_days[0] = (empty("CMS_VALUE[10]")) ? false : true;
 
 // includes
 cInclude('module', 'includes/class.datetime.php');
+// todo DEPRECATED
 cInclude('module', 'includes/class.cntnd_booking.php');
+cInclude('module', 'includes/class.cntnd_simple_booking.php');
 if ($editmode){
-  cInclude('module', 'includes/script.cntnd_booking_output.php');
+  cInclude('module', 'includes/script.cntnd_simple_booking_output.php');
 }
 
 // other/vars
 $smarty = cSmartyFrontend::getInstance();
 $booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client);
+$simple_booking = new CntndSimpleBooking($daterange, $show_daterange, $mailto, $blocked_days, $lang, $client, $idart);
 
-if (empty($daterange) OR empty($timerange_from) OR empty($timerange_to) OR empty($interval)){
+$has_config = $simple_booking->hasConfig();
+
+if (empty($daterange) OR !$has_config){
   echo '<div class="cntnd_alert cntnd_alert-primary">';
   if ($editmode){
     echo mi18n("NO_CONFIG");
@@ -55,7 +60,8 @@ if ($editmode){
       $admin_error=true;
     }
   }
-	echo '<div class="content_box cntnd_booking"><label class="content_type_label">'.mi18n("MODULE").'</label>';
+
+  echo '<div class="content_box cntnd_booking"><label class="content_type_label">'.mi18n("MODULE").'</label>';
   echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("ADMIN_MODE").'</div>';
   if ($admin_success){
     echo '<hr />';
@@ -65,7 +71,20 @@ if ($editmode){
     echo '<hr />';
     echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("ADMIN_FAILURE").'</div>';
   }
-  echo '<div class="d-flex ">';
+
+  // TABS
+
+  echo '<ul class="nav nav-tabs" id="simple_booking_admin" role="tablist">';
+  echo '<li class="nav-item" role="presentation"><button class="nav-link '.($has_config ? "active" : "").'" id="simple_booking_admin_tab-tab" data-bs-toggle="tab" data-bs-target="#simple_booking_admin_tab" type="button" role="tab" aria-controls="simple_booking_admin_tab" aria-selected="'.($has_config ? "true" : "false").'">Admin</button></li>';
+  echo '<li class="nav-item" role="presentation"><button class="nav-link '.(!$has_config ? "active" : "").'" id="simple_booking_config_tab-tab" data-bs-toggle="tab" data-bs-target="#simple_booking_config_tab" type="button" role="tab" aria-controls="simple_booking_config_tab" aria-selected="'.(!$has_config ? "true" : "false").'">Konfiguration</button></li>';
+  echo '</ul>';
+
+  // CONTENT
+  echo '<div class="tab-content" id="simple_booking_admin-content">';
+  // CONTENT: ADMIN
+  echo '<div class="tab-pane fade '.($has_config ? "show active" : "").'" id="simple_booking_admin_tab" role="tabpanel" aria-labelledby="simple_booking_admin_tab-tab">';
+
+  echo '<div class="d-flex m-2">';
 
   echo '<div class="w-50 pr-10">';
   $smarty->assign('data', $booking->listAll());
@@ -105,6 +124,20 @@ if ($editmode){
   echo '</div>';
 
   echo '</div>';
+
+  echo '</div>';
+  // endregion
+
+  // CONTENT: CONFIG
+  echo '<div class="tab-pane fade '.(!$has_config ? "show active" : "").'" id="simple_booking_config_tab" role="tabpanel" aria-labelledby="simple_booking_config_tab-tab">';
+
+  echo "<h1>config</h1>";
+
+  echo '</div>';
+  // endregion
+  echo '</div>';
+
+  // endregion
   echo '</div>';
 }
 else {

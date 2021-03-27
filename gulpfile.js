@@ -27,7 +27,7 @@ gulp.task('sass', function() {
 
 gulp.task('zip', function() {
   return gulp.src(['src/**/*','!src/scss*'])
-  		.pipe(zip('cntnd_booking.zip'))
+  		.pipe(zip(pkg.name+'.zip'))
   		.pipe(gulp.dest('dist/'));
 });
 
