@@ -40,17 +40,152 @@ class CntndSimpleBooking {
 
   private function config(){
     $sql = "SELECT * FROM :table WHERE idart = :idart";
-    $values = array('table' => $this->_vars['db']['config'], "idart" => $this->idart);
-    $this->db->query($sql, $values);
-    $configs = $this->db->getRow();
-    if ($configs>0) {
-      return $this->db->getResultObject();
+    $values = array(
+        'table' => $this->_vars['db']['config'],
+        'idart' => $this->idart);
+    $result = $this->db->query($sql, $values);
+    if ($result->num_rows>0) {
+      $config = array();
+      while ($this->db->nextRecord()) {
+        $rs = $this->db->toObject();
+        $config[DateTimeUtil::getIndexFromDate($rs->date)][$rs->id]=array(
+            'time' => DateTimeUtil::getReadableTimeFromDate($rs->time),
+            'slots' => $rs->slots,
+            'comment' => $rs->comment);
+      }
+      return $config;
     }
     return NULL;
   }
 
   public function hasConfig(){
     return !is_null($this->config);
+  }
+
+  public function renderConfig(){
+    $config = $this->config();
+    $daterange = DateTimeUtil::getDaterange($this->daterange,$this->blocked_days);
+
+    foreach ($daterange as $date) {
+      $index = DateTimeUtil::getIndexFromDate($date[0]);
+      echo '<h5>'.$date[1].'</h5>';
+      echo '<table class="table order-list date__'.$index.'">';
+      echo '<thead><tr>';
+      echo '<th>Zeit</th>';
+      echo '<th>Anzahl Slots</th>';
+      echo '<th colspan="2">Bemerkung (wird angezeigt)</th>';
+      echo '</tr></thead>';
+
+      echo '<tbody>';
+
+      $i=0;
+      if (!is_null($config) && array_key_exists($index, $config)){
+        foreach ($config[$index] as $id => $dateConfig){
+          echo '<tr data-row="'.$id.'">';
+          echo '<td><input type="time" name="config['.$index.']['.$id.'][time]" class="form-control" placeholder="Zeit (HH:mm)" value="'.$dateConfig['time'].'" required/></td>';
+          echo '<td><input type="number" name="config['.$index.']['.$id.'][slots]" class="form-control" placeholder="Anzahl Slots" value="'.$dateConfig['slots'].'" required/></td>';
+          echo '<td><input type="text" name="config['.$index.']['.$id.'][comment]" class="form-control" placeholder="Bemerkung" value="'.$dateConfig['comment'].'" /></td>';
+          echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+          echo '</tr>';
+        }
+
+        $i = $id + 1;
+      }
+
+      echo '<tr data-row="'.$i.'">';
+      echo '<td><input type="time" name="config['.$index.']['.$i.'][time]" class="form-control" placeholder="Zeit (HH:mm)" required/></td>';
+      echo '<td><input type="number" name="config['.$index.']['.$i.'][slots]" class="form-control" placeholder="Anzahl Slots" required/></td>';
+      echo '<td><input type="text" name="config['.$index.']['.$i.'][comment]" class="form-control" placeholder="Bemerkung"/></td>';
+      echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+      echo '</tr>';
+
+      echo '</tbody>';
+
+      echo '<tfoot><tr>';
+      echo '<td colspan="4">';
+      echo '<button type="button" class="btn btn-sm btn-light cntnd_booking-config-add" data-date="'.$index.'">Zeit hinzufügen</button>&nbsp;';
+      echo '<button type="button" class="btn btn-sm btn-primary cntnd_booking-config-save">Speichern</button>';
+      echo '</td>';
+      echo '</tr></tfoot>';
+
+      echo '</table>';
+    }
+  }
+
+  public function saveConfig($post){
+    $config = $this->config();
+
+    if (is_array($post['config'])){
+      foreach ($post['config'] as $date => $dateConfig){
+        if (is_null($config) || !array_key_exists($date, $config)){
+          $this->insertDateConfig($date, $dateConfig);
+        }
+        else {
+          $this->updateDateConfig($date, $dateConfig, $config[$date]);
+        }
+      }
+    }
+
+    $this->config = $this->config();
+  }
+
+  private function checkDateTimeConfig($config){
+    if (array_key_exists('time', $config) &&
+        array_key_exists('slots', $config)){
+      return (!empty($config['time']) && !empty($config['slots']));
+    }
+    return false;
+  }
+
+  private function insertDateConfig($date, $dateConfig){
+    foreach ($dateConfig as $config){
+      $this->insertDateTimeConfig($date, $config);
+    }
+  }
+
+  private function insertDateTimeConfig($date, $config){
+    if ($this->checkDateTimeConfig($config)) {
+      $sql = "INSERT INTO :table (idart, date, time, slots, comment) VALUES (:idart, ':date', ':time', :slots, ':comment')";
+      $values = array(
+          'table' => $this->_vars['db']['config'],
+          'idart' => $this->idart,
+          'date' => DateTimeUtil::getInsertDate($date),
+          'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
+          'slots' => $config['slots'],
+          'comment' => $config['comment']
+      );
+      $test = $this->db->prepare($sql, $values);
+      $test2 = $this->db->query($sql, $values);
+      var_dump($test);
+      var_dump($test2);
+    }
+  }
+
+  private function updateDateConfig($date, $dateConfig, $originalConfig){
+    foreach ($dateConfig as $id => $config){
+      if (array_key_exists($id, $originalConfig)){
+        $this->updateDateTimeConfig($id, $date, $config);
+      }
+      else {
+        $this->insertDateTimeConfig($date, $config);
+      }
+    }
+  }
+
+  private function updateDateTimeConfig($id, $date, $config){
+    if ($this->checkDateTimeConfig($config)) {
+      $sql = "UPDATE :table SET idart = :idart, date = ':date', time = ':time', slots = :slots, comment = ':comment' WHERE id = :id";
+      $values = array(
+          'table' => $this->_vars['db']['config'],
+          'id' => $id,
+          'idart' => $this->idart,
+          'date' => DateTimeUtil::getInsertDate($date),
+          'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
+          'slots' => $config['slots'],
+          'comment' => $config['comment']
+      );
+      $this->db->query($sql, $values);
+    }
   }
 
   public function daterange(){

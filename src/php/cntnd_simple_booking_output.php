@@ -53,11 +53,16 @@ if (empty($daterange) OR !$has_config){
 if ($editmode){
   // ADMIN
   if ($_POST){
-    if (CntndBooking::validateUpdate($_POST)){
-      $admin_success=$booking->update($_POST);
+    if ($_POST["cntnd_booking-config"]=="save"){
+      $simple_booking->saveConfig($_POST);
     }
     else {
-      $admin_error=true;
+      if (CntndBooking::validateUpdate($_POST)){
+        $admin_success=$booking->update($_POST);
+      }
+      else {
+        $admin_error=true;
+      }
     }
   }
 
@@ -131,7 +136,14 @@ if ($editmode){
   // CONTENT: CONFIG
   echo '<div class="tab-pane fade '.(!$has_config ? "show active" : "").'" id="simple_booking_config_tab" role="tabpanel" aria-labelledby="simple_booking_config_tab-tab">';
 
-  echo "<h1>config</h1>";
+  echo '<div class="m-2">';
+
+  echo '<form method="post" id="cntnd_booking-config" name="cntnd_booking-config"';
+  $simple_booking->renderConfig();
+  echo '<input type="hidden" name="cntnd_booking-config" value="save" />';
+  echo '</form>';
+
+  echo '</div>';
 
   echo '</div>';
   // endregion
