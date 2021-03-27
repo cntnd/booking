@@ -87,9 +87,9 @@ class CntndSimpleBooking {
           echo '<td><input type="text" name="config['.$index.']['.$id.'][comment]" class="form-control" placeholder="Bemerkung" value="'.$dateConfig['comment'].'" /></td>';
           echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
           echo '</tr>';
-        }
 
-        $i = $id + 1;
+          $i = $id + 1;
+        }
       }
 
       echo '<tr data-row="'.$i.'">';
@@ -154,10 +154,7 @@ class CntndSimpleBooking {
           'slots' => $config['slots'],
           'comment' => $config['comment']
       );
-      $test = $this->db->prepare($sql, $values);
-      $test2 = $this->db->query($sql, $values);
-      var_dump($test);
-      var_dump($test2);
+      $this->db->query($sql, $values);
     }
   }
 
@@ -174,10 +171,10 @@ class CntndSimpleBooking {
 
   private function updateDateTimeConfig($id, $date, $config){
     if ($this->checkDateTimeConfig($config)) {
-      $sql = "UPDATE :table SET idart = :idart, date = ':date', time = ':time', slots = :slots, comment = ':comment' WHERE id = :id";
+      $sql= "UPDATE :table SET idart = :idart, date = ':date', time = ':time', slots = :slots, comment = ':comment' WHERE id = :uid";
       $values = array(
           'table' => $this->_vars['db']['config'],
-          'id' => $id,
+          'uid' => $id,
           'idart' => $this->idart,
           'date' => DateTimeUtil::getInsertDate($date),
           'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
