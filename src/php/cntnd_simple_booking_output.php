@@ -9,7 +9,7 @@ $editmode = cRegistry::isBackendEditMode();
 
 // input/vars
 $daterange = "CMS_VALUE[1]";
-$show_daterange = "CMS_VALUE[2]";
+$config_reset = "CMS_VALUE[2]";
 $mailto = "CMS_VALUE[3]";
 $subject_default = "CMS_VALUE[4]";
 $subject_declined = "CMS_VALUE[5]";
@@ -36,7 +36,7 @@ if ($editmode){
 
 // other/vars
 $smarty = cSmartyFrontend::getInstance();
-$simple_booking = new CntndSimpleBooking($daterange, $show_daterange, $mailto, $subject, $blocked_days, $lang, $client, $idart);
+$simple_booking = new CntndSimpleBooking($daterange, $config_reset, $mailto, $subject, $blocked_days, $lang, $client, $idart);
 
 $has_config = $simple_booking->hasConfig();
 
@@ -156,7 +156,7 @@ if ($editmode){
 else {
   // PUBLIC
   if ($_POST){
-    if (CntndSimpleBooking::validate($_POST)){
+    if (CntndSimpleBooking::validate($_POST, $_SESSION['rand'])){
       $success=$simple_booking->store($_POST);
       $error=!$success;
     }
@@ -164,16 +164,14 @@ else {
       $failure=true;
     }
   }
+  // REFRESH
+  $rand = mt_rand();
+  $_SESSION['rand']=$rand;
+
   echo '<div class="cntnd_booking">';
   echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation">';
   $simple_booking->render();
-  // show more/less
-  if (!empty($show_daterange)){
-    echo '<div class="cntnd_booking-pagination">';
-    echo '<span class="cntnd_booking-more">'.mi18n("MORE").'</span>';
-    echo '<span class="cntnd_booking-less hide">'.mi18n("LESS").'</span>';
-    echo '</div>';
-  }
+
   // show messages
   $failureMsg=($failure) ? '' : 'hide';
   echo '<div class="cntnd_alert cntnd_alert-danger cntnd_booking-validation '.$failureMsg.'">';
@@ -181,7 +179,6 @@ else {
   echo '<ul>';
   echo '<li class="cntnd_booking-validation-required">'.mi18n("VALIDATION_REQUIRED").'</li>';
   echo '<li class="cntnd_booking-validation-dates">'.mi18n("VALIDATION_DATES").'</li>';
-  echo '<li class="cntnd_booking-validation-days">'.mi18n("VALIDATION_DAYS").'</li>';
   echo '</ul>';
   echo '</div>';
   if ($success){
@@ -196,6 +193,7 @@ else {
   echo '<button type="reset" class="btn">'.mi18n("RESET").'</button>';
   echo '<input type="hidden" name="required" id="cntnd_booking-required" />';
   echo '<input type="hidden" name="fields" id="cntnd_booking-fields" />';
+  echo '<input type="hidden" name="rand" value="'.$rand.'" />';
   echo '</form>';
   echo '</div>';
 }

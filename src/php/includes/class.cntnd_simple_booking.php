@@ -6,7 +6,6 @@ cInclude('module', 'includes/class.datetime.php');
 class CntndSimpleBooking {
 
   private $daterange;
-  private $show_daterange;
   private $mailto;
   private $subject;
   private $blocked_days;
@@ -26,9 +25,8 @@ class CntndSimpleBooking {
     )
   );
 
-  function __construct($daterange, $show_daterange, $mailto, $subject, $blocked_days, $lang, $client, $idart) {
+  function __construct($daterange, $config_reset, $mailto, $subject, $blocked_days, $lang, $client, $idart) {
     $this->daterange=$daterange;
-    $this->show_daterange=$show_daterange;
     $this->mailto=$mailto;
     $this->subject=$subject;
     $this->blocked_days=$blocked_days;
@@ -38,31 +36,55 @@ class CntndSimpleBooking {
     $this->lang = $lang;
     $this->idart = $idart;
 
-    $this->config = $this->config();
+    $this->config = $this->config($config_reset);
   }
 
-  private function config(){
-    $sql = "SELECT * FROM :table WHERE idart = :idart";
-    $values = array(
-        'table' => $this->_vars['db']['config'],
-        'idart' => $this->idart);
-    $result = $this->db->query($sql, $values);
-    if ($result->num_rows>0) {
-      $config = array();
-      while ($this->db->nextRecord()) {
-        $rs = $this->db->toObject();
-        $config[DateTimeUtil::getIndexFromDate($rs->date)][$rs->id]=array(
-            'time' => DateTimeUtil::getReadableTimeFromDate($rs->time),
-            'slots' => $rs->slots,
-            'comment' => $rs->comment);
+  private function config($config_reset=false){
+    if (!$config_reset) {
+      $sql = "SELECT * FROM :table WHERE idart = :idart";
+      $values = array(
+          'table' => $this->_vars['db']['config'],
+          'idart' => $this->idart);
+      $result = $this->db->query($sql, $values);
+      if ($result->num_rows > 0) {
+        $config = array();
+        while ($this->db->nextRecord()) {
+          $rs = $this->db->toObject();
+          $config[DateTimeUtil::getIndexFromDate($rs->date)][$rs->id] = array(
+              'time' => DateTimeUtil::getReadableTimeFromDate($rs->time),
+              'slots' => $rs->slots,
+              'comment' => $rs->comment);
+        }
+        return $config;
       }
-      return $config;
+    }
+    else {
+      $this->configReset($config_reset);
     }
     return NULL;
   }
 
+  private function configReset($config_reset){
+    $blocked_days = json_decode(base64_decode($config_reset), true);
+    foreach ($blocked_days as $day => $blocked_day){
+      if ($blocked_day){
+        $this->removeConfig($day);
+      }
+    }
+    return $this->config();
+  }
+
+  private function removeConfig($day){
+    $sql = "DELETE FROM :table WHERE day = :day AND idart = :idart";
+    $values = array(
+      'table' => $this->_vars['db']['config'],
+      'day' => $day,
+      'idart' => $this->idart);
+    $this->db->query($sql, $values);
+  }
+
   public function hasConfig(){
-    return !is_null($this->config);
+    return !is_null($this->config());
   }
 
   public function renderConfig(){
@@ -148,12 +170,13 @@ class CntndSimpleBooking {
 
   private function insertDateTimeConfig($date, $config){
     if ($this->checkDateTimeConfig($config)) {
-      $sql = "INSERT INTO :table (idart, date, time, slots, comment) VALUES (:idart, ':date', ':time', :slots, ':comment')";
+      $sql = "INSERT INTO :table (idart, date, time, day, slots, comment) VALUES (:idart, ':date', ':time', :day, :slots, ':comment')";
       $values = array(
           'table' => $this->_vars['db']['config'],
           'idart' => cSecurity::toInteger($this->idart),
           'date' => DateTimeUtil::getInsertDate($date),
           'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
+          'day' => DateTimeUtil::getInsertDay($date),
           'slots' => cSecurity::toInteger($config['slots']),
           'comment' => $this->escape($config['comment'])
       );
@@ -174,13 +197,14 @@ class CntndSimpleBooking {
 
   private function updateDateTimeConfig($id, $date, $config){
     if ($this->checkDateTimeConfig($config)) {
-      $sql= "UPDATE :table SET idart = :idart, date = ':date', time = ':time', slots = :slots, comment = ':comment' WHERE id = :uid";
+      $sql= "UPDATE :table SET idart = :idart, date = ':date', time = ':time', day = :day, slots = :slots, comment = ':comment' WHERE id = :uid";
       $values = array(
           'table' => $this->_vars['db']['config'],
           'uid' => cSecurity::toInteger($id),
           'idart' => cSecurity::toInteger($this->idart),
           'date' => DateTimeUtil::getInsertDate($date),
           'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
+          'day' => DateTimeUtil::getInsertDay($date),
           'slots' => cSecurity::toInteger($config['slots']),
           'comment' => $this->escape($config['comment'])
       );
@@ -249,8 +273,8 @@ class CntndSimpleBooking {
     }
   }
 
-  public static function validate($post){
-    if (is_array($post)){
+  public static function validate($post, $rand){
+    if (is_array($post) && $rand==$post['rand']){
       return (self::validateDates($post) && self::validateRequired($post));
     }
     return false;
@@ -373,9 +397,16 @@ class CntndSimpleBooking {
     $this->db->query($sql, $values);
     $data=[];
     while ($this->db->next_record()) {
+      $title='';
+      $newDate = DateTimeUtil::getIndexFromDate($this->db->f('date'));
+      $newTime = DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
+      $readableTime = DateTimeUtil::getReadableTimeFromDate($this->db->f('time'));
+      if ($time!=$newTime || $date!=$newDate) {
+        $title = "Zeit: ".$readableTime;
+      }
       $data_detail = array(
         'id'=>$this->db->f('id'),
-        'time'=>DateTimeUtil::getReadableTimeFromDate($this->db->f('time')),
+        'time'=>$readableTime,
         'name'=>$this->db->f('name'),
         'adresse'=>$this->db->f('address'),
         'status'=>$this->db->f('status'),
@@ -383,9 +414,11 @@ class CntndSimpleBooking {
         'email'=>$this->db->f('email'),
         'telefon'=>$this->db->f('phone'),
         'personen'=>$this->db->f('amount'),
-        'bemerkungen'=>$this->db->f('comment')
-      );
+        'bemerkungen'=>$this->db->f('comment'),
+        'title'=>$title);
       $data[date('d.m.Y',strtotime($this->db->f('date')))][]=$data_detail;
+      $time = DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
+      $date = DateTimeUtil::getIndexFromDate($this->db->f('date'));
     }
     return $data;
   }

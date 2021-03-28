@@ -19,27 +19,6 @@ $(document).ready(function(){
     }
   });
 
-  $('.cntnd_booking-more').click(function(){
-    $(this).addClass('hide');
-    $('.not-in-range').removeClass('hide');
-    $('.cntnd_booking-less').removeClass('hide');
-  });
-
-  $('.cntnd_booking-less').click(function(){
-    $(this).addClass('hide');
-    $('.not-in-range').addClass('hide');
-    $('.cntnd_booking-more').removeClass('hide');
-  });
-
-
-  function gatherElements(formId,elementClass){
-    var elements=[];
-    $('#'+formId+' .'+elementClass).each(function(){
-      elements.push($(this).attr('name'));
-    });
-    return window.btoa(JSON.stringify(elements));
-  }
-
   function validateBookings(){
     return true;
   }
@@ -48,7 +27,6 @@ $(document).ready(function(){
     $('.cntnd_booking-validation').addClass('hide');
     $('.cntnd_booking-validation-required').hide();
     $('.cntnd_booking-validation-dates').hide();
-    $('.cntnd_booking-validation-days').hide();
     var required = $('#cntnd_booking-reservation .required').filter(function(){
       return ($(this).val()==='');
     });

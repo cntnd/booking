@@ -2,6 +2,14 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <script>
 $(document).ready(function(){
+  $('.blocked_day').click(function(){
+    var blocked_days = {};
+    $('.blocked_day').each(function(index) {
+        blocked_days[$(this).attr('data-day')]=$(this).is(':checked');
+    });
+    $('#reset_config').val(window.btoa(JSON.stringify(blocked_days)));
+  });
+
   $('.cntnd_booking_daterange').daterangepicker({"locale": {
         "format": "DD.MM.YYYY",
         "separator": " - ",

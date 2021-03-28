@@ -209,4 +209,9 @@ class DateTimeUtil
         $datetime = strtotime($d." ".$time);
         return date("Y-m-d H:i:s", $datetime);
     }
+
+    public static function getInsertDay($date)
+    {
+        return self::checkDateTime($date)->format("w");
+    }
 }
