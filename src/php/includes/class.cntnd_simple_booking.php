@@ -8,6 +8,7 @@ class CntndSimpleBooking {
   private $daterange;
   private $show_daterange;
   private $mailto;
+  private $subject;
   private $blocked_days;
 
   private $db;
@@ -16,18 +17,20 @@ class CntndSimpleBooking {
   private $idart;
 
   private $config;
+  private $debug = true;
 
   private $_vars = array(
     "db"=> array(
         "config"=>"cntnd_simple_booking_config",
-        "bookings"=>"cntnd_simple_booking_draft"
+        "bookings"=>"cntnd_simple_booking"
     )
   );
 
-  function __construct($daterange, $show_daterange, $mailto, $blocked_days, $lang, $client, $idart) {
+  function __construct($daterange, $show_daterange, $mailto, $subject, $blocked_days, $lang, $client, $idart) {
     $this->daterange=$daterange;
     $this->show_daterange=$show_daterange;
     $this->mailto=$mailto;
+    $this->subject=$subject;
     $this->blocked_days=$blocked_days;
 
     $this->db = new cDb;
@@ -148,11 +151,11 @@ class CntndSimpleBooking {
       $sql = "INSERT INTO :table (idart, date, time, slots, comment) VALUES (:idart, ':date', ':time', :slots, ':comment')";
       $values = array(
           'table' => $this->_vars['db']['config'],
-          'idart' => $this->idart,
+          'idart' => cSecurity::toInteger($this->idart),
           'date' => DateTimeUtil::getInsertDate($date),
           'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
-          'slots' => $config['slots'],
-          'comment' => $config['comment']
+          'slots' => cSecurity::toInteger($config['slots']),
+          'comment' => $this->escape($config['comment'])
       );
       $this->db->query($sql, $values);
     }
@@ -174,12 +177,12 @@ class CntndSimpleBooking {
       $sql= "UPDATE :table SET idart = :idart, date = ':date', time = ':time', slots = :slots, comment = ':comment' WHERE id = :uid";
       $values = array(
           'table' => $this->_vars['db']['config'],
-          'uid' => $id,
-          'idart' => $this->idart,
+          'uid' => cSecurity::toInteger($id),
+          'idart' => cSecurity::toInteger($this->idart),
           'date' => DateTimeUtil::getInsertDate($date),
           'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
-          'slots' => $config['slots'],
-          'comment' => $config['comment']
+          'slots' => cSecurity::toInteger($config['slots']),
+          'comment' => $this->escape($config['comment'])
       );
       $this->db->query($sql, $values);
     }
@@ -246,35 +249,15 @@ class CntndSimpleBooking {
     }
   }
 
-  // legacy
-  public static function validate($post,$interval){
+  public static function validate($post){
     if (is_array($post)){
-      return (self::validateDates($post,$interval) && self::validateRequired($post));
+      return (self::validateDates($post) && self::validateRequired($post));
     }
     return false;
   }
 
-  private static function validateDates($post,$interval){
-    $valid=false;
-    if (array_key_exists('dates',$post) && is_array($post['dates'])){
-      $valid=true;
-      $dates = $post['dates'];
-      $interval_ms = $interval*60; // interval is in sec and timestamp is in ms
-      sort($dates);
-      foreach ($dates as $date) {
-        if (!empty($old)){
-          $diff = $date-$old;
-          if ($diff>$interval_ms){
-            $valid=false;
-          }
-          if (date('d.m.Y',$old)!=date('d.m.Y',$date)){
-            $valid=false;
-          }
-        }
-        $old=$date;
-      }
-    }
-    return $valid;
+  private static function validateDates($post){
+    return (array_key_exists('bookings',$post) && is_array($post['bookings']));
   }
 
   private static function validateRequired($post){
@@ -294,57 +277,59 @@ class CntndSimpleBooking {
   }
 
   public function store($post){
-    $dates = DateTimeUtil::getInsertDates($post['dates']);
-    $sql = "INSERT INTO cntnd_booking (idclient, idlang, name, adresse, plz_ort, email, telefon, personen, bemerkungen, status, datum, time_von, time_bis) VALUES (:idclient, :idlang, ':name', ':adresse', ':plz_ort', ':email', ':telefon', :personen, ':bemerkungen', ':status', ':datum', ':time_von', ':time_bis')";
+    $date = key($post['bookings']);
+    $time = key($post['bookings'][$date]);
+    $amount = count($post['bookings'][$date][$time]);
+
+    $sql = "INSERT INTO :table (idart, date, time, amount, name, address, po_box, email, phone, comment) VALUES (:idart, ':date', ':time', :amount, ':name', ':address', ':po_box', ':email', ':phone', ':comment')";
     $values = array(
-        'idclient' => cSecurity::toInteger($this->client),
-        'idlang' => cSecurity::toInteger($this->lang),
-        'name'=> $this->db->escape($post['name']),
-        'adresse'=> $this->db->escape($post['adresse']),
-        'plz_ort'=> $this->db->escape($post['plz_ort']),
-        'email'=> $this->db->escape($post['email']),
-        'telefon'=> $this->db->escape($post['telefon']),
-        'personen'=> cSecurity::toInteger($post['personen']),
-        'bemerkungen'=> $this->db->escape($post['bemerkungen']),
-        'status'=> 'blocked',
-        'datum'=> $dates['datum'],
-        'time_von'=> $dates['time_von'],
-        'time_bis'=> $dates['time_bis']
+        'table' => $this->_vars['db']['bookings'],
+        'idart' => cSecurity::toInteger($this->idart),
+        'date' => DateTimeUtil::getInsertDate($date),
+        'time'=> DateTimeUtil::getInsertDateTime($date, $time),
+        'amount'=> cSecurity::toInteger($amount),
+        'name'=> $this->escape($post['name']),
+        'address'=> $this->escape($post['adresse']),
+        'po_box'=> $this->escape($post['plz_ort']),
+        'email'=> $this->escape($post['email']),
+        'phone'=> $this->escape($post['telefon']),
+        'comment'=> $this->escape($post['bemerkungen'])
     );
     if ($this->db->query($sql, $values)){
-      $this->informationEmail($post,$dates);
+      $this->informationEmail($post, $date, $time, $amount);
       return true;
     }
     return false;
   }
 
-  private function informationEmail($post,$dates){
+  // legacy
+  private function informationEmail($post, $date, $time, $amount){
     $mailer = new cMailer();
     $smarty = cSmartyFrontend::getInstance();
     // use template to display email
-    $time_bis = new DateTime($dates['dat_email'].' '.$dates['time_bis']);
-    $time_bis->modify('+'.$this->interval.' minutes');
-
-    $smarty->assign('dat_email', $dates['dat_email']);
+    $smarty->assign('date', DateTimeUtil::getReadableDate($date));
+    $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($time));
     $smarty->assign('name', $post['name']);
     $smarty->assign('adresse', $post['adresse']);
     $smarty->assign('plz_ort', $post['plz_ort']);
     $smarty->assign('telefon', $post['telefon']);
     $smarty->assign('bemerkungen', $post['bemerkungen']);
     $smarty->assign('email', $post['email']);
-    $smarty->assign('personen', $post['personen']);
-    $smarty->assign('time_von', $dates['time_von']);
-    $smarty->assign('time_bis', $time_bis->format('H:i'));
-    $body = $smarty->fetch('reservation-mail.html');
+    $smarty->assign('personen', $amount);
+    $body = $smarty->fetch('email_reservation.html');
     // Create a message
-    // todo betreff etc
-    $mail = Swift_Message::newInstance('Ihre Reservation')
-    ->setFrom($mailto)
+    $mail = Swift_Message::newInstance($this->subject['default'])
+    ->setFrom($this->mailto)
     ->setTo($post['email'])
     ->setBody($body, 'text/html');
 
     // Send the message
-    $result = $mailer->send($mail);
+    if (!$this->debug){
+      $result = $mailer->send($mail);
+    }
+    else {
+      $result = true;
+    }
     return $result;
   }
 
@@ -369,8 +354,10 @@ class CntndSimpleBooking {
   }
 
   public function loadById($id){
-    $sql = "SELECT * FROM cntnd_booking WHERE id = :id";
-    $values = array('id' => $id);
+    $sql = "SELECT * FROM :table WHERE id = :id";
+    $values = array(
+        'table' => $this->_vars['db']['bookings'],
+        'id' => $id);
     $this->db->query($sql, $values);
     return $this->db->getResultObject();
   }
@@ -411,13 +398,16 @@ class CntndSimpleBooking {
 
   public function update($post){
     if ($post['action']=='delete'){
-      $sql = "DELETE FROM cntnd_booking WHERE id = :id";
-      $values = array('id' => $post['resid']);
+      $sql = "DELETE FROM :table WHERE id = :id";
+      $values = array(
+          'table' => $this->_vars['db']['bookings'],
+          'id' => $post['resid']);
       $this->rejectionEmail($post);
     }
     else {
-      $sql = "UPDATE cntnd_booking SET status = ':status', mut_dat = NOW() WHERE id = :id";
+      $sql = "UPDATE :table SET status = ':status', mut_date = NOW() WHERE id = :id";
       $values = array(
+        'table' => $this->_vars['db']['bookings'],
         'status' => 'reserved',
         'id' => $post['resid']);
       $this->confirmationEmail($post);
@@ -425,48 +415,65 @@ class CntndSimpleBooking {
     return $this->db->query($sql, $values);
   }
 
+  // legacy
   private function confirmationEmail($post){
     $mailer = new cMailer();
     $smarty = cSmartyFrontend::getInstance();
     // use template to display email
     $record = $this->loadById($post['resid']);
-    $smarty->assign('datum', DateTimeUtil::getReadableDate($record->datum));
-    $smarty->assign('time_von', DateTimeUtil::getReadableTimeFromDate($record->time_von));
-    $smarty->assign('time_bis', DateTimeUtil::getReadableTimeFromDate($record->time_bis));
-    $smarty->assign('bemerkungen', $record->bemerkungen);
+    $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
+    $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
+    $smarty->assign('personen', $record->amount);
+    $smarty->assign('bemerkungen', $record->comment);
     $smarty->assign('message', $post['bemerkungen']);
-    $body = $smarty->fetch('reservation-definitiv-mail.html');
+    $body = $smarty->fetch('email_reservation-definitiv.html');
     // Create a message
-    $mail = Swift_Message::newInstance('Ihre Reservationsbestätigung')
-    ->setFrom($mailto)
+    $mail = Swift_Message::newInstance($this->subject['reserved'])
+    ->setFrom($this->mailto)
     ->setTo($post['email'])
     ->setBody($body, 'text/html');
 
     // Send the message
-    $result = $mailer->send($mail);
+    if (!$this->debug){
+      $result = $mailer->send($mail);
+    }
+    else {
+      $result = true;
+    }
     return $result;
   }
 
+  // legacy
   private function rejectionEmail($post){
     $mailer = new cMailer();
     $smarty = cSmartyFrontend::getInstance();
     // use template to display email
     $record = $this->loadById($post['resid']);
-    $smarty->assign('datum', DateTimeUtil::getReadableDate($record->datum));
-    $smarty->assign('time_von', DateTimeUtil::getReadableTimeFromDate($record->time_von));
-    $smarty->assign('time_bis', DateTimeUtil::getReadableTimeFromDate($record->time_bis));
-    $smarty->assign('bemerkungen', $record->bemerkungen);
+    $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
+    $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
+    $smarty->assign('personen', $record->amount);
+    $smarty->assign('bemerkungen', $record->comment);
     $smarty->assign('message', $post['bemerkungen']);
-    $body = $smarty->fetch('reservation-abgelehnt-mail.html');
+    $body = $smarty->fetch('email_reservation-abgelehnt.html');
     // Create a message
-    $mail = Swift_Message::newInstance('Ablehnung ihrer Reservation')
-    ->setFrom($mailto)
+    $mail = Swift_Message::newInstance($this->subject['declined'])
+    ->setFrom($this->mailto)
     ->setTo($post['email'])
     ->setBody($body, 'text/html');
 
     // Send the message
-    $result = $mailer->send($mail);
+    if (!$this->debug){
+      $result = $mailer->send($mail);
+    }
+    else {
+      $result = true;
+    }
     return $result;
+  }
+
+  private function escape($string){
+    $escaped = htmlentities($string, ENT_QUOTES, "UTF-8");
+    return $this->db->escape($escaped);
   }
 }
 ?>

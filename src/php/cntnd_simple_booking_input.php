@@ -3,6 +3,18 @@
 
 // input/vars
 $show_daterange = "CMS_VALUE[2]";
+$subject = "CMS_VALUE[4]";
+if (empty($subject)){
+    $subject = mi18n("DEFAULT_SUBJECT");
+}
+$subject_declined = "CMS_VALUE[5]";
+if (empty($subject_declined)){
+    $subject_declined = mi18n("DEFAULT_SUBJECT_DECLINED");
+}
+$subject_reserved = "CMS_VALUE[6]";
+if (empty($subject_reserved)){
+    $subject_reserved = mi18n("DEFAULT_SUBJECT_RESERVED");
+}
 
 // other/vars
 
@@ -72,5 +84,20 @@ cInclude('module', 'includes/style.cntnd_simple_booking_input.php');
     <label for="email"><?= mi18n("EMAIL") ?></label>
     <input id="email" type="email" name="CMS_VAR[3]" value="CMS_VALUE[3]" />
   </div>
+
+  <div class="form-group">
+    <label for="email"><?= mi18n("SUBJECT") ?></label>
+    <input id="email" type="text" name="CMS_VAR[4]" value="<?= $subject ?>" />
+  </div>
+
+    <div class="form-group">
+        <label for="email"><?= mi18n("SUBJECT_DECLINED") ?></label>
+        <input id="email" type="text" name="CMS_VAR[5]" value="<?= $subject_declined ?>" />
+    </div>
+
+    <div class="form-group">
+        <label for="email"><?= mi18n("SUBJECT_RESERVED") ?></label>
+        <input id="email" type="text" name="CMS_VAR[6]" value="<?= $subject_reserved ?>" />
+    </div>
 </div>
 <?php

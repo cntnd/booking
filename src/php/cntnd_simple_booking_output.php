@@ -11,6 +11,13 @@ $editmode = cRegistry::isBackendEditMode();
 $daterange = "CMS_VALUE[1]";
 $show_daterange = "CMS_VALUE[2]";
 $mailto = "CMS_VALUE[3]";
+$subject_default = "CMS_VALUE[4]";
+$subject_declined = "CMS_VALUE[5]";
+$subject_reserved = "CMS_VALUE[6]";
+$subject = array(
+    'default'=>$subject_default,
+    'declined'=>$subject_declined,
+    'reserved'=>$subject_reserved);
 
 $blocked_days[1] = (empty("CMS_VALUE[11]")) ? false : true;
 $blocked_days[2] = (empty("CMS_VALUE[12]")) ? false : true;
@@ -29,7 +36,7 @@ if ($editmode){
 
 // other/vars
 $smarty = cSmartyFrontend::getInstance();
-$simple_booking = new CntndSimpleBooking($daterange, $show_daterange, $mailto, $blocked_days, $lang, $client, $idart);
+$simple_booking = new CntndSimpleBooking($daterange, $show_daterange, $mailto, $subject, $blocked_days, $lang, $client, $idart);
 
 $has_config = $simple_booking->hasConfig();
 
@@ -51,7 +58,7 @@ if ($editmode){
       $simple_booking->saveConfig($_POST);
     }
     else {
-      if (CntndBooking::validateUpdate($_POST)){
+      if (CntndSimpleBooking::validateUpdate($_POST)){
         $admin_success=$simple_booking->update($_POST);
       }
       else {
@@ -148,17 +155,16 @@ if ($editmode){
 }
 else {
   // PUBLIC
-  /*
   if ($_POST){
-    if (CntndSimpleBooking::validate($_POST,$interval)){
-      $success=$simple_booking->store($_POST,$interval);
+    var_dump($_POST);
+    if (CntndSimpleBooking::validate($_POST)){
+      $success=$simple_booking->store($_POST);
       $error=!$success;
     }
     else {
       $failure=true;
     }
   }
-  */
   echo '<div class="cntnd_booking">';
   echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation">';
   $simple_booking->render();
@@ -186,7 +192,7 @@ else {
     echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("FAILURE").'</div>';
   }
   // use template to display formular
-  $smarty->display('reservation-formular.html');
+  $smarty->display('formular_reservation.html');
   echo '<button type="submit" class="btn btn-primary">'.mi18n("SAVE").'</button>';
   echo '<button type="reset" class="btn">'.mi18n("RESET").'</button>';
   echo '<input type="hidden" name="required" id="cntnd_booking-required" />';
