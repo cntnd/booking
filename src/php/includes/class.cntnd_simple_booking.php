@@ -190,62 +190,63 @@ class CntndSimpleBooking {
   }
 
   public function render(){
-    $timerange = DateTimeUtil::getTimerange($this->timerange_from, $this->timerange_to, $this->interval);
     $daterange = DateTimeUtil::getDaterange($this->daterange,$this->blocked_days);
     $data = $this->load($this->daterange);
+    $config = $this->config();
 
-    echo '<table class="table">';
-    echo '<thead><tr>';
-    echo '<th>Datum</th>';
-    foreach ($timerange as $time) {
-      $to = DateTimeUtil::getToWithInterval($time[0],$this->interval);
-      echo '<th>'.$time[1].'<span class="separator">-</span>'.$to.'</th>';
-    }
-    echo '</tr></thead>';
-    echo '<tbody>';
     foreach ($daterange as $date) {
-      $class='res_hide';
-      if (DateTimeUtil::isEvenWeek($date[0])){
-        $class.=' even-dat';
-      }
-      // todo was wenn Mo = blocked??
-      if (DateTimeUtil::isMonday($date[0])){
-        $class.=' kw-dat';
-      }
-      if (!DateTimeUtil::isInShowRange($this->daterange,$this->show_daterange,$date[0])){
-        $class.=' not-in-range hide';
-      }
-      else {
-        $class.=' in-range';
-      }
-      echo '<tr class="'.$class.'"">';
-      echo '<th scope="row"><nobr class="cntnd_booking-date" data-date="'.$date[0].'">'.$date[1].'</nobr></th>';
-      foreach ($timerange as $time) {
-        $disabled='';
-        $timestamp = strtotime($date[0].' '.$time[1]);
-        if (array_key_exists($timestamp,$data)){
-          $status = $data[$timestamp]['status'];
-          $until = strtotime($date[0].' '.$data[$timestamp]['time_bis']);
+      $index = DateTimeUtil::getIndexFromDate($date[0]);
+
+      if (!is_null($config) && array_key_exists($index, $config)) {
+        echo '<h6>' . $date[1] . '</h6>';
+        echo '<table class="table cntnd_booking-table">';
+        echo '<thead><tr>';
+        echo '<th width="25%">Zeit</th>';
+        echo '<th>Reservation</th>';
+        echo '</tr></thead>';
+        echo '<tbody>';
+
+        foreach ($config[$index] as $dateConfig){
+          $dt = DateTimeUtil::getIndexFromDateAndTime($date[0], $dateConfig['time']);
+          $time=substr($dt, -4);
+          $bookings = array();
+          if (array_key_exists($index, $data) && array_key_exists($time, $data[$index])){
+            foreach ($data[$index][$time] as $slots){
+              for($i=0;$i<$slots['amount'];$i++){
+                $bookings[]=$slots['status'];
+              }
+            }
+          }
+          $comment = "";
+          if (!empty($dateConfig['comment'])){
+            $comment = "(".$dateConfig['comment'].")";
+          }
+          echo '<tr>';
+          echo '<td><span class="cntnd_booking-date">'.$dateConfig['time'].' '.$comment.'</span></td>';
+          echo '<td><div class="d-flex">';
+          for ($i=0;$i<$dateConfig['slots'];$i++){
+            $disabled='';
+            if (empty($bookings[$i])){
+              $bookings[$i]="free";
+            }
+            else if ($bookings[$i]!="free"){
+              $disabled='disabled="disabled"';
+            }
+            echo '<div class="w-auto cntnd_booking__slot" data-status="'.$bookings[$i].'">';
+            echo '<input class="cntnd_booking-checkbox" name="bookings['.$index.']['.$time.'][]" type="checkbox" value="reserved" '.$disabled.' />';
+            echo '</div>';
+          }
+          echo '</div></td>';
+          echo '</tr>';
         }
-        else if (empty($until) || $timestamp>$until){
-          $status = 'free';
-          unset($until);
-        }
-        if ($status!='free'){
-          $disabled='disabled="disabled"';
-        }
-        echo '<td class="'.$status.'">';
-        echo '<label for="'.$timestamp.'" class="res_checkbox">';
-        echo '<input id="'.$timestamp.'" class="cntnd_booking-checkbox" name="dates[]" type="checkbox" value="'.$timestamp.'" '.$disabled.' />';
-        echo '</label>';
-        echo '</td>';
+
+        echo '</tbody>';
+        echo '</table>';
       }
-      echo '</tr>';
     }
-    echo '</tbody>';
-    echo '</table>';
   }
 
+  // legacy
   public static function validate($post,$interval){
     if (is_array($post)){
       return (self::validateDates($post,$interval) && self::validateRequired($post));
@@ -349,16 +350,20 @@ class CntndSimpleBooking {
 
   public function load($daterange){
     $dates = DateTimeUtil::getDatesFromDaterange($daterange);
-    $sql = "SELECT * FROM cntnd_booking WHERE datum between ':datum_von' AND ':datum_bis' ORDER BY datum, time_von";
+    $sql = "SELECT * FROM :table WHERE date between ':datum_von' AND ':datum_bis' ORDER BY date, time";
     $values = array(
+      'table' => $this->_vars['db']['bookings'],
       'datum_von' => $dates[0]->format('Y-m-d'),
       'datum_bis' => $dates[1]->format('Y-m-d')
     );
     $this->db->query($sql, $values);
     $data=[];
     while ($this->db->next_record()) {
-      $timestamp = strtotime($this->db->f('datum').' '.$this->db->f('time_von'));
-      $data[$timestamp]=array('time_von'=>$this->db->f('time_von'),'time_bis'=>$this->db->f('time_bis'),'status'=>$this->db->f('status'));
+      $index=DateTimeUtil::getIndexFromDate($this->db->f('date'));
+      $time=DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
+      $data[$index][$time][$this->db->f('id')]=array(
+          'amount' => $this->db->f('amount'),
+          'status' => $this->db->f('status'));
     }
     return $data;
   }
@@ -371,25 +376,26 @@ class CntndSimpleBooking {
   }
 
   public function listAll(){
-    $sql = "SELECT * FROM cntnd_booking WHERE datum >= ':datum' ORDER BY datum, time_von";
-    $values = array('datum' => date('Y-m-d'));
+    $sql = "SELECT * FROM :table WHERE date >= ':datum' ORDER BY date, time";
+    $values = array(
+        'table' => $this->_vars['db']['bookings'],
+        'datum' => date('Y-m-d'));
     $this->db->query($sql, $values);
     $data=[];
     while ($this->db->next_record()) {
       $data_detail = array(
         'id'=>$this->db->f('id'),
+        'time'=>DateTimeUtil::getReadableTimeFromDate($this->db->f('time')),
         'name'=>$this->db->f('name'),
-        'adresse'=>$this->db->f('adresse'),
+        'adresse'=>$this->db->f('address'),
         'status'=>$this->db->f('status'),
-        'plz_ort'=>$this->db->f('plz_ort'),
+        'plz_ort'=>$this->db->f('po_box'),
         'email'=>$this->db->f('email'),
-        'telefon'=>$this->db->f('telefon'),
-        'personen'=>$this->db->f('personen'),
-        'bemerkungen'=>$this->db->f('bemerkungen'),
-        'time_von'=>$this->db->f('time_von'),
-        'time_bis'=>$this->db->f('time_bis')
+        'telefon'=>$this->db->f('phone'),
+        'personen'=>$this->db->f('amount'),
+        'bemerkungen'=>$this->db->f('comment')
       );
-      $data[date('d.m.Y',strtotime($this->db->f('datum')))][]=$data_detail;
+      $data[date('d.m.Y',strtotime($this->db->f('date')))][]=$data_detail;
     }
     return $data;
   }

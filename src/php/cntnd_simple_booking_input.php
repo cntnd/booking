@@ -3,25 +3,8 @@
 
 // input/vars
 $show_daterange = "CMS_VALUE[2]";
-$interval = "CMS_VALUE[3]";
-switch ($interval){
-    case '30':
-            $check_30 = 'selected="selected"';
-            break;
-    case '60':
-            $check_60 = 'selected="selected"';
-            break;
-    case '120':
-            $check_120 = 'selected="selected"';
-            break;
-}
-$timerange_from = "CMS_VALUE[4]";
-$timerange_to = "CMS_VALUE[5]";
 
 // other/vars
-if (empty($interval) || empty($timerange_from)){
-    $timerange_to_disabled = 'disabled="disabled"';
-}
 
 // includes
 cInclude('module', 'includes/class.datetime.php');
@@ -86,64 +69,8 @@ cInclude('module', 'includes/style.cntnd_simple_booking_input.php');
   <hr />
 
   <div class="form-group">
-    <label for="interval"><?= mi18n("INTERVAL") ?></label>
-    <select id="interval" name="CMS_VAR[3]" size="1">
-        <option value=""> - </option>
-        <option value="30" <?= $check_30 ?>> 30 Minuten</option>
-        <option value="60" <?= $check_60 ?>> 1 Stunde</option>
-        <option value="120" <?= $check_120 ?>> 2 Stunden</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <?php
-    if (empty($interval) || empty($timerange_from)){
-      echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("TIME_DISABLED").'</div>';
-    }
-    ?>
-    <div><?= mi18n("TIME") ?></div>
-    <div class="form-check form-check-inline">
-      <label for="blocked_day_sa" class="form-check-label"><?= mi18n("TIME_FROM") ?></label>
-      <select class="form-check-input" name="CMS_VAR[4]" size="1">
-      <?php
-          // todo 5 Minuten, 15, Minuten, ?? --> Timepicker
-          for ($i=0;$i<48;$i++){
-              $min=$i*30;
-              $selected = "";
-              $time = DateTimeUtil::getReadableTime($min);
-              if ($min==$timerange_from){
-                  $selected = 'selected="selected"';
-              }
-              echo '<option value="'.$min.'" '.$selected.'> '.$time.'</option>';
-          }
-      ?>
-      </select>
-    </div>
-
-    <div class="form-check form-check-inline">
-      <label for="blocked_day_sa" class="form-check-label"><?= mi18n("TIME_TO") ?></label>
-      <select class="form-check-input" name="CMS_VAR[5]" size="1" <?= $timerange_to_disabled ?>>
-      <?php
-          if (!empty($timerange_from) && !empty($interval)){
-              $timerange=DateTimeUtil::getTimerange($timerange_from,1440,$interval);
-              foreach ($timerange as $time) {
-                $selected = "";
-                if ($time[0]==$timerange_to){
-                    $selected = 'selected="selected"';
-                }
-                echo '<option value="'.$time[0].'" '.$selected.'> '.$time[1].'</option>';
-              }
-          }
-      ?>
-      </select>
-    </div>
-  </div>
-
-  <hr />
-
-  <div class="form-group">
     <label for="email"><?= mi18n("EMAIL") ?></label>
-    <input id="email" type="email" name="CMS_VAR[6]" value="CMS_VALUE[6]" />
+    <input id="email" type="email" name="CMS_VAR[3]" value="CMS_VALUE[3]" />
   </div>
 </div>
 <?php

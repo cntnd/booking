@@ -10,10 +10,7 @@ $editmode = cRegistry::isBackendEditMode();
 // input/vars
 $daterange = "CMS_VALUE[1]";
 $show_daterange = "CMS_VALUE[2]";
-$interval = "CMS_VALUE[3]";
-$timerange_from = "CMS_VALUE[4]";
-$timerange_to = "CMS_VALUE[5]";
-$mailto = "CMS_VALUE[6]";
+$mailto = "CMS_VALUE[3]";
 
 $blocked_days[1] = (empty("CMS_VALUE[11]")) ? false : true;
 $blocked_days[2] = (empty("CMS_VALUE[12]")) ? false : true;
@@ -25,8 +22,6 @@ $blocked_days[0] = (empty("CMS_VALUE[10]")) ? false : true;
 
 // includes
 cInclude('module', 'includes/class.datetime.php');
-// todo DEPRECATED
-cInclude('module', 'includes/class.cntnd_booking.php');
 cInclude('module', 'includes/class.cntnd_simple_booking.php');
 if ($editmode){
   cInclude('module', 'includes/script.cntnd_simple_booking_output.php');
@@ -34,7 +29,6 @@ if ($editmode){
 
 // other/vars
 $smarty = cSmartyFrontend::getInstance();
-$booking = new CntndBooking($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client);
 $simple_booking = new CntndSimpleBooking($daterange, $show_daterange, $mailto, $blocked_days, $lang, $client, $idart);
 
 $has_config = $simple_booking->hasConfig();
@@ -58,7 +52,7 @@ if ($editmode){
     }
     else {
       if (CntndBooking::validateUpdate($_POST)){
-        $admin_success=$booking->update($_POST);
+        $admin_success=$simple_booking->update($_POST);
       }
       else {
         $admin_error=true;
@@ -92,7 +86,7 @@ if ($editmode){
   echo '<div class="d-flex m-2">';
 
   echo '<div class="w-50 pr-10">';
-  $smarty->assign('data', $booking->listAll());
+  $smarty->assign('data', $simple_booking->listAll());
   $smarty->display('admin-liste.html');
   echo '</div>';
 
@@ -138,7 +132,7 @@ if ($editmode){
 
   echo '<div class="m-2">';
 
-  echo '<form method="post" id="cntnd_booking-config" name="cntnd_booking-config"';
+  echo '<form method="post" id="cntnd_booking-config" name="cntnd_booking-config">';
   $simple_booking->renderConfig();
   echo '<input type="hidden" name="cntnd_booking-config" value="save" />';
   echo '</form>';
@@ -154,18 +148,20 @@ if ($editmode){
 }
 else {
   // PUBLIC
+  /*
   if ($_POST){
-    if (CntndBooking::validate($_POST,$interval)){
-      $success=$booking->store($_POST,$interval);
+    if (CntndSimpleBooking::validate($_POST,$interval)){
+      $success=$simple_booking->store($_POST,$interval);
       $error=!$success;
     }
     else {
       $failure=true;
     }
   }
+  */
   echo '<div class="cntnd_booking">';
-  echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation" data-interval="'.$interval.'">';
-  $booking->render();
+  echo '<form method="post" id="cntnd_booking-reservation" name="cntnd_booking-reservation">';
+  $simple_booking->render();
   // show more/less
   if (!empty($show_daterange)){
     echo '<div class="cntnd_booking-pagination">';

@@ -77,6 +77,19 @@ class DateTimeUtil
         return ($dt->format("Ymd"));
     }
 
+    public static function getIndexFromDateTime($dateTime)
+    {
+        $dt = new DateTime($dateTime);
+        return ($dt->format("Hi"));
+    }
+
+    public static function getIndexFromDateAndTime($date, $time)
+    {
+        $d = self::checkDateTime($date)->format("d.m.Y");
+        $datetime = strtotime($d." ".$time);
+        return date("YmdHi", $datetime);
+    }
+
     public static function getReadableTime($seconds)
     {
         $time = self::getHourMinute($seconds);
