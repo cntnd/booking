@@ -43,6 +43,14 @@
 	&.focus {
 		box-shadow: 0 0 0 0.2rem rgba(82,88,93,.5);
 	}
+
+	&.blocked .card-header {
+		background-color: $blocked;
+	}
+
+	&.reserved .card-header {
+		background-color: $reserved;
+	}
 }
 
 .pr-10 {

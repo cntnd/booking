@@ -156,7 +156,6 @@ if ($editmode){
 else {
   // PUBLIC
   if ($_POST){
-    var_dump($_POST);
     if (CntndSimpleBooking::validate($_POST)){
       $success=$simple_booking->store($_POST);
       $error=!$success;

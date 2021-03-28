@@ -17,7 +17,7 @@ class CntndSimpleBooking {
   private $idart;
 
   private $config;
-  private $debug = true;
+  private $debug = false;
 
   private $_vars = array(
     "db"=> array(
@@ -304,9 +304,8 @@ class CntndSimpleBooking {
 
   // legacy
   private function informationEmail($post, $date, $time, $amount){
-    $mailer = new cMailer();
-    $smarty = cSmartyFrontend::getInstance();
     // use template to display email
+    $smarty = cSmartyFrontend::getInstance();
     $smarty->assign('date', DateTimeUtil::getReadableDate($date));
     $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($time));
     $smarty->assign('name', $post['name']);
@@ -317,17 +316,21 @@ class CntndSimpleBooking {
     $smarty->assign('email', $post['email']);
     $smarty->assign('personen', $amount);
     $body = $smarty->fetch('email_reservation.html');
-    // Create a message
-    $mail = Swift_Message::newInstance($this->subject['default'])
-    ->setFrom($this->mailto)
-    ->setTo($post['email'])
-    ->setBody($body, 'text/html');
 
-    // Send the message
     if (!$this->debug){
+      $mailer = new cMailer();
+
+      // Create a message
+      $mail = Swift_Message::newInstance($this->subject['default'])
+      ->setFrom($this->mailto)
+      ->setTo($post['email'])
+      ->setBody($body, 'text/html');
+
+      // Send the message
       $result = $mailer->send($mail);
     }
     else {
+      var_dump($body);
       $result = true;
     }
     return $result;
@@ -417,9 +420,8 @@ class CntndSimpleBooking {
 
   // legacy
   private function confirmationEmail($post){
-    $mailer = new cMailer();
-    $smarty = cSmartyFrontend::getInstance();
     // use template to display email
+    $smarty = cSmartyFrontend::getInstance();
     $record = $this->loadById($post['resid']);
     $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
     $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
@@ -427,17 +429,21 @@ class CntndSimpleBooking {
     $smarty->assign('bemerkungen', $record->comment);
     $smarty->assign('message', $post['bemerkungen']);
     $body = $smarty->fetch('email_reservation-definitiv.html');
-    // Create a message
-    $mail = Swift_Message::newInstance($this->subject['reserved'])
-    ->setFrom($this->mailto)
-    ->setTo($post['email'])
-    ->setBody($body, 'text/html');
 
-    // Send the message
     if (!$this->debug){
+      $mailer = new cMailer();
+
+      // Create a message
+      $mail = Swift_Message::newInstance($this->subject['reserved'])
+      ->setFrom($this->mailto)
+      ->setTo($record->email)
+      ->setBody($body, 'text/html');
+
+      // Send the message
       $result = $mailer->send($mail);
     }
     else {
+      var_dump($body);
       $result = true;
     }
     return $result;
@@ -445,9 +451,8 @@ class CntndSimpleBooking {
 
   // legacy
   private function rejectionEmail($post){
-    $mailer = new cMailer();
-    $smarty = cSmartyFrontend::getInstance();
     // use template to display email
+    $smarty = cSmartyFrontend::getInstance();
     $record = $this->loadById($post['resid']);
     $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
     $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
@@ -455,17 +460,20 @@ class CntndSimpleBooking {
     $smarty->assign('bemerkungen', $record->comment);
     $smarty->assign('message', $post['bemerkungen']);
     $body = $smarty->fetch('email_reservation-abgelehnt.html');
-    // Create a message
-    $mail = Swift_Message::newInstance($this->subject['declined'])
-    ->setFrom($this->mailto)
-    ->setTo($post['email'])
-    ->setBody($body, 'text/html');
 
-    // Send the message
     if (!$this->debug){
+      $mailer = new cMailer();
+      // Create a message
+      $mail = Swift_Message::newInstance($this->subject['declined'])
+      ->setFrom($this->mailto)
+      ->setTo($record->email)
+      ->setBody($body, 'text/html');
+
+      // Send the message
       $result = $mailer->send($mail);
     }
     else {
+      var_dump($body);
       $result = true;
     }
     return $result;
