@@ -1,6 +1,6 @@
 {
   "name": "cntnd_simple_booking",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Reservationssystem (Simpel)",
   "devDependencies": {
     "del": "^5.1.0",

@@ -20,8 +20,7 @@ $(document).ready(function(){
   });
 
   function validateBookings(){
-    // todo, etwas ausgewählt
-    return true;
+    return $('.cntnd_booking-checkbox:checked').length>0;
   }
 
   $('#cntnd_booking-reservation').submit(function() {
@@ -31,15 +30,20 @@ $(document).ready(function(){
     var required = $('#cntnd_booking-reservation .required').filter(function(){
       return ($(this).val()==='');
     });
-    if (!validateBookings() || required.length>0){
+    var bookings=validateBookings();
+    if (!bookings || required.length>0){
       $('.cntnd_booking-validation').removeClass('hide');
       if (required.length>0){
         $('.cntnd_booking-validation-required').show();
+      }
+      if (!bookings){
+        $('.cntnd_booking-validation-dates').show();
       }
       return false;
     }
     $('#cntnd_booking-fields').val(gatherElements('cntnd_booking-reservation','form-control'));
     $('#cntnd_booking-required').val(gatherElements('cntnd_booking-reservation','required'));
-    return true;
+    //return true;
+    return false;
   });
 });
