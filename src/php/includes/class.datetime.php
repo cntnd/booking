@@ -25,6 +25,7 @@ class DateTimeUtil
         $range = [];
         $dates = self::getDatesFromDaterange($daterange);
         $max = self::getDaysFromDateRange($daterange);
+
         for ($i = 0; $i <= $max; $i++) {
             if (!self::isBlockedDay($dates[0], $blocked_days)) {
                 $range[] = array($dates[0]->format('d.m.Y'), self::getReadableDate($dates[0]));
@@ -47,8 +48,8 @@ class DateTimeUtil
 
     public static function getDaysFromDateRange($daterange)
     {
-        $dates = self::getStringsFromDaterange($daterange);
-        $max = $dates[1] - $dates[0];
+        $dates = self::getDatesFromDaterange($daterange);
+        $max = $dates[1]->diff($dates[0])->days;
         return $max;
     }
 

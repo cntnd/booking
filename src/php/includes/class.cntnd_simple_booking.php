@@ -18,7 +18,7 @@ class CntndSimpleBooking {
   private $config;
   private $debug = false;
 
-  private $_vars = array(
+  private static $_vars = array(
     "db"=> array(
         "config"=>"cntnd_simple_booking_config",
         "bookings"=>"cntnd_simple_booking"
@@ -43,7 +43,7 @@ class CntndSimpleBooking {
     if (!$config_reset) {
       $sql = "SELECT * FROM :table WHERE idart = :idart";
       $values = array(
-          'table' => $this->_vars['db']['config'],
+          'table' => self::$_vars['db']['config'],
           'idart' => $this->idart);
       $result = $this->db->query($sql, $values);
       if ($result->num_rows > 0) {
@@ -77,7 +77,7 @@ class CntndSimpleBooking {
   private function removeConfig($day){
     $sql = "DELETE FROM :table WHERE day = :day AND idart = :idart";
     $values = array(
-      'table' => $this->_vars['db']['config'],
+      'table' => self::$_vars['db']['config'],
       'day' => $day,
       'idart' => $this->idart);
     $this->db->query($sql, $values);
@@ -172,7 +172,7 @@ class CntndSimpleBooking {
     if ($this->checkDateTimeConfig($config)) {
       $sql = "INSERT INTO :table (idart, date, time, day, slots, comment) VALUES (:idart, ':date', ':time', :day, :slots, ':comment')";
       $values = array(
-          'table' => $this->_vars['db']['config'],
+          'table' => self::$_vars['db']['config'],
           'idart' => cSecurity::toInteger($this->idart),
           'date' => DateTimeUtil::getInsertDate($date),
           'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
@@ -199,7 +199,7 @@ class CntndSimpleBooking {
     if ($this->checkDateTimeConfig($config)) {
       $sql= "UPDATE :table SET idart = :idart, date = ':date', time = ':time', day = :day, slots = :slots, comment = ':comment' WHERE id = :uid";
       $values = array(
-          'table' => $this->_vars['db']['config'],
+          'table' => self::$_vars['db']['config'],
           'uid' => cSecurity::toInteger($id),
           'idart' => cSecurity::toInteger($this->idart),
           'date' => DateTimeUtil::getInsertDate($date),
@@ -280,6 +280,41 @@ class CntndSimpleBooking {
     return false;
   }
 
+  public static function validateFree($post, $idart){
+    $date = key($post['bookings']);
+    $time = key($post['bookings'][$date]);
+    $slots = count($post['bookings'][$date][$time]);
+
+    $db = new cDb;
+    $sql = "SELECT amount FROM :table WHERE idart = :idart AND time = ':time'";
+    $values = array(
+        'table' => self::$_vars['db']['bookings'],
+        'idart' => cSecurity::toInteger($idart),
+        'time' => DateTimeUtil::getInsertDateTime($date, $time));
+    $result = $db->query($sql, $values);
+    if ($result->num_rows > 0) {
+      $max = self::availableSlots($idart, $date, $time);
+      $amount=0;
+      while ($db->next_record()) {
+        $amount = $amount + $db->f('amount');
+      }
+      $free = $max - $amount;
+      return ($free>=$slots);
+    }
+    return true;
+  }
+
+  private static function availableSlots($idart, $date, $time){
+    $db = new cDb;
+    $sql = "SELECT slots FROM :table WHERE idart = :idart AND time = ':time'";
+    $values = array(
+        'table' => self::$_vars['db']['config'],
+        'idart' => cSecurity::toInteger($idart),
+        'time' => DateTimeUtil::getInsertDateTime($date, $time));
+    $db->query($sql, $values);
+    return $db->getResultObject()->slots;
+  }
+
   private static function validateDates($post){
     return (array_key_exists('bookings',$post) && is_array($post['bookings']));
   }
@@ -307,7 +342,7 @@ class CntndSimpleBooking {
 
     $sql = "INSERT INTO :table (idart, date, time, amount, name, address, po_box, email, phone, comment) VALUES (:idart, ':date', ':time', :amount, ':name', ':address', ':po_box', ':email', ':phone', ':comment')";
     $values = array(
-        'table' => $this->_vars['db']['bookings'],
+        'table' => self::$_vars['db']['bookings'],
         'idart' => cSecurity::toInteger($this->idart),
         'date' => DateTimeUtil::getInsertDate($date),
         'time'=> DateTimeUtil::getInsertDateTime($date, $time),
@@ -364,7 +399,7 @@ class CntndSimpleBooking {
     $dates = DateTimeUtil::getDatesFromDaterange($daterange);
     $sql = "SELECT * FROM :table WHERE date between ':datum_von' AND ':datum_bis' ORDER BY date, time";
     $values = array(
-      'table' => $this->_vars['db']['bookings'],
+      'table' => self::$_vars['db']['bookings'],
       'datum_von' => $dates[0]->format('Y-m-d'),
       'datum_bis' => $dates[1]->format('Y-m-d')
     );
@@ -383,7 +418,7 @@ class CntndSimpleBooking {
   public function loadById($id){
     $sql = "SELECT * FROM :table WHERE id = :id";
     $values = array(
-        'table' => $this->_vars['db']['bookings'],
+        'table' => self::$_vars['db']['bookings'],
         'id' => $id);
     $this->db->query($sql, $values);
     return $this->db->getResultObject();
@@ -392,7 +427,7 @@ class CntndSimpleBooking {
   public function listAll(){
     $sql = "SELECT * FROM :table WHERE date >= ':datum' ORDER BY date, time";
     $values = array(
-        'table' => $this->_vars['db']['bookings'],
+        'table' => self::$_vars['db']['bookings'],
         'datum' => date('Y-m-d'));
     $this->db->query($sql, $values);
     $data=[];
@@ -436,14 +471,14 @@ class CntndSimpleBooking {
     if ($post['action']=='delete'){
       $sql = "DELETE FROM :table WHERE id = :id";
       $values = array(
-          'table' => $this->_vars['db']['bookings'],
+          'table' => self::$_vars['db']['bookings'],
           'id' => $post['resid']);
       $this->rejectionEmail($post);
     }
     else {
       $sql = "UPDATE :table SET status = ':status', mut_date = NOW() WHERE id = :id";
       $values = array(
-        'table' => $this->_vars['db']['bookings'],
+        'table' => self::$_vars['db']['bookings'],
         'status' => 'reserved',
         'id' => $post['resid']);
       $this->confirmationEmail($post);

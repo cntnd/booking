@@ -20,6 +20,7 @@ $(document).ready(function(){
   });
 
   function validateBookings(){
+    // todo, etwas ausgewählt
     return true;
   }
 

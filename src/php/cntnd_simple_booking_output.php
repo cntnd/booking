@@ -157,8 +157,14 @@ else {
   // PUBLIC
   if ($_POST){
     if (CntndSimpleBooking::validate($_POST, $_SESSION['rand'])){
-      $success=$simple_booking->store($_POST);
-      $error=!$success;
+      if (CntndSimpleBooking::validateFree($_POST, $idart)) {
+        $success = $simple_booking->store($_POST);
+        $error = !$success;
+        $error_free=false;
+      }
+      else {
+        $error_free=true;
+      }
     }
     else {
       $failure=true;
@@ -185,7 +191,10 @@ else {
     echo '<div class="cntnd_alert cntnd_alert-primary">'.mi18n("SUCCESS").'</div>';
   }
   if ($error){
-    echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("FAILURE").'</div>';
+    echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("FAILURE").'</li></div>';
+  }
+  if ($error_free){
+    echo '<div class="cntnd_alert cntnd_alert-danger">'.mi18n("VALIDATION_FREE_SLOTS").'</div>';
   }
   // use template to display formular
   $smarty->display('formular_reservation.html');
