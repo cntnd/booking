@@ -246,7 +246,7 @@ class CntndSimpleBooking {
           }
           $comment = "";
           if (!empty($dateConfig['comment'])){
-            $comment = "(".$dateConfig['comment'].")";
+            $comment = $dateConfig['comment'];
           }
           echo '<tr>';
           echo '<td><span class="cntnd_booking-date">'.$dateConfig['time'].' '.$comment.'</span></td>';
