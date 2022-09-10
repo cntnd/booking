@@ -1,0 +1,49 @@
+<!-- cntnd_booking/template/booking-default.html -->
+{foreach name=reservation item=reservation from=$data}
+    {if $reservation.entries.dateConfigs|@count > 0}
+        {assign var="show_date" value=''}
+        {if $reservation.dateIndex>$reservation.showDaterange}
+            {assign var="show_date" value='not-in-range hide'}
+        {/if}
+        <div class="{$show_date}">
+            <h6>{$reservation.entries.title}</h6>
+            <table class="table cntnd_booking-table">
+                <thead>
+                <tr>
+                    <th width="25%">Datum</th>
+                    <th>Reservation</th>
+                </tr>
+                </thead>
+                <tbody>
+                {foreach name=config item=config from=$reservation.entries.dateConfigs}
+                <tr>
+                    <td>
+                        <span class="cntnd_booking-date">{$config.time}</span>
+                        {if $config.comment neq ''}
+                        <small>{$config.comment}</small>
+                        {/if}
+                    </td>
+                    <td>
+                        <div class="d-flex">
+                            {foreach name=booking item=booking from=$config.bookings}
+                                {assign var="disabled" value=''}
+                                {if $booking neq 'free'}
+                                    {assign var="disabled" value='disabled="disabled"'}
+                                {/if}
+                                <div class="w-auto cntnd_booking__slot" data-status="{$booking}">
+                                    <input {$disabled} class="cntnd_booking-checkbox" name="bookings[{$reservation.dateIndex}][{$config.time_index}][]" type="checkbox" value="reserved"/>
+                                </div>
+                            {/foreach}
+                        </div>
+                    </td>
+                </tr>
+                {/foreach}
+                </tbody>
+            </table>
+        </div>
+    {/if}
+{/foreach}
+{if $pagination}
+{include file="cntnd_booking/template/booking_pagination.html"}
+{/if}
+<!-- /cntnd_booking/template/reservation_listehtml -->

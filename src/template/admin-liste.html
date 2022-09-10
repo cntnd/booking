@@ -1,8 +1,11 @@
 {foreach key=datum item=reservation from=$data}
   <h5>{$datum}</h5>
   {foreach item=res from=$reservation}
-  <div class="card cntnd_booking {$res.status}" data-resid="{$res.id}" data-timeslot="{$datum} {$res.time_von} bis {$res.time_bis}">
-    <h5 class="card-header">{$res.time_von} bis {$res.time_bis} - Personen: {$res.personen}</h5>
+  {if !empty($res.title)}
+  <h6>{$res.title}</h6>
+  {/if}
+  <div class="card cntnd_booking {$res.status} {if $res.past}past{/if}" data-resid="{$res.id}" data-timeslot="{$datum} {$res.time} - {$res.name} ({$res.personen} Personen)">
+    <h5 class="card-header">{$res.time} - Personen: {$res.personen}</h5>
     <div class="card-body">
       <div class="card-text">
         {$res.name}<br />

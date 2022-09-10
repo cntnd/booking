@@ -1,312 +1,814 @@
 <?php
+
 cInclude('module', 'includes/class.datetime.php');
+cInclude('module', 'includes/class.cntnd_util.php');
+
 /**
  * cntnd_booking Class
  */
-class CntndBooking {
+class CntndSimpleBooking
+{
 
-  private $daterange;
-  private $show_daterange;
-  private $interval;
-  private $timerange_from;
-  private $timerange_to;
-  private $mailto;
-  private $blocked_days;
+    private $daterange;
+    private $mailto;
+    private $subject;
+    private $blocked_days;
+    private $one_click;
+    private $show_daterange;
+    private $show_past;
 
-  private $db;
-  private $client;
-  private $lang;
+    private $db;
+    private $client;
+    private $lang;
+    private $idart;
 
-  function __construct($daterange, $show_daterange, $interval, $timerange_from, $timerange_to, $mailto, $blocked_days, $lang, $client) {
-    $this->daterange=$daterange;
-    $this->show_daterange=$show_daterange;
-    $this->interval=$interval;
-    $this->timerange_from=$timerange_from;
-    $this->timerange_to=$timerange_to;
-    $this->mailto=$mailto;
-    $this->blocked_days=$blocked_days;
+    private $config;
+    private $debug = false;
 
-    $this->db = new cDb;
-    $this->client = $client;
-    $this->lang = $lang;
-  }
-
-  public function daterange(){
-    return $this->daterange;
-  }
-
-  public function render(){
-    $timerange = DateTimeUtil::getTimerange($this->timerange_from, $this->timerange_to, $this->interval);
-    $daterange = DateTimeUtil::getDaterange($this->daterange,$this->blocked_days);
-    $data = $this->load($this->daterange);
-
-    echo '<table class="table">';
-    echo '<thead><tr>';
-    echo '<th>Datum</th>';
-    foreach ($timerange as $time) {
-      $to = DateTimeUtil::getToWithInterval($time[0],$this->interval);
-      echo '<th>'.$time[1].'<span class="separator">-</span>'.$to.'</th>';
-    }
-    echo '</tr></thead>';
-    echo '<tbody>';
-    foreach ($daterange as $date) {
-      $class='res_hide';
-      if (DateTimeUtil::isEvenWeek($date[0])){
-        $class.=' even-dat';
-      }
-      // todo was wenn Mo = blocked??
-      if (DateTimeUtil::isMonday($date[0])){
-        $class.=' kw-dat';
-      }
-      if (!DateTimeUtil::isInShowRange($this->daterange,$this->show_daterange,$date[0])){
-        $class.=' not-in-range hide';
-      }
-      else {
-        $class.=' in-range';
-      }
-      echo '<tr class="'.$class.'"">';
-      echo '<th scope="row"><nobr class="cntnd_booking-date" data-date="'.$date[0].'">'.$date[1].'</nobr></th>';
-      foreach ($timerange as $time) {
-        $disabled='';
-        $timestamp = strtotime($date[0].' '.$time[1]);
-        if (array_key_exists($timestamp,$data)){
-          $status = $data[$timestamp]['status'];
-          $until = strtotime($date[0].' '.$data[$timestamp]['time_bis']);
-        }
-        else if (empty($until) || $timestamp>$until){
-          $status = 'free';
-          unset($until);
-        }
-        if ($status!='free'){
-          $disabled='disabled="disabled"';
-        }
-        echo '<td class="'.$status.'">';
-        echo '<label for="'.$timestamp.'" class="res_checkbox">';
-        echo '<input id="'.$timestamp.'" class="cntnd_booking-checkbox" name="dates[]" type="checkbox" value="'.$timestamp.'" '.$disabled.' />';
-        echo '</label>';
-        echo '</td>';
-      }
-      echo '</tr>';
-    }
-    echo '</tbody>';
-    echo '</table>';
-  }
-
-  public static function validate($post,$interval){
-    if (is_array($post)){
-      return (self::validateDates($post,$interval) && self::validateRequired($post));
-    }
-    return false;
-  }
-
-  private static function validateDates($post,$interval){
-    $valid=false;
-    if (array_key_exists('dates',$post) && is_array($post['dates'])){
-      $valid=true;
-      $dates = $post['dates'];
-      $interval_ms = $interval*60; // interval is in sec and timestamp is in ms
-      sort($dates);
-      foreach ($dates as $date) {
-        if (!empty($old)){
-          $diff = $date-$old;
-          if ($diff>$interval_ms){
-            $valid=false;
-          }
-          if (date('d.m.Y',$old)!=date('d.m.Y',$date)){
-            $valid=false;
-          }
-        }
-        $old=$date;
-      }
-    }
-    return $valid;
-  }
-
-  private static function validateRequired($post){
-    $valid=false;
-    if (array_key_exists('required',$post)){
-      $valid=true;
-      $required = json_decode(base64_decode($post['required']), true);
-      if (is_array($required)){
-        foreach ($required as $value) {
-          if (empty($post[$value])){
-            $valid=false;
-          }
-        }
-      }
-    }
-    return $valid;
-  }
-
-  public function store($post){
-    $dates = DateTimeUtil::getInsertDates($post['dates']);
-    $sql = "INSERT INTO cntnd_booking (idclient, idlang, name, adresse, plz_ort, email, telefon, personen, bemerkungen, status, datum, time_von, time_bis) VALUES (:idclient, :idlang, ':name', ':adresse', ':plz_ort', ':email', ':telefon', :personen, ':bemerkungen', ':status', ':datum', ':time_von', ':time_bis')";
-    $values = array(
-        'idclient' => cSecurity::toInteger($this->client),
-        'idlang' => cSecurity::toInteger($this->lang),
-        'name'=> $this->db->escape($post['name']),
-        'adresse'=> $this->db->escape($post['adresse']),
-        'plz_ort'=> $this->db->escape($post['plz_ort']),
-        'email'=> $this->db->escape($post['email']),
-        'telefon'=> $this->db->escape($post['telefon']),
-        'personen'=> cSecurity::toInteger($post['personen']),
-        'bemerkungen'=> $this->db->escape($post['bemerkungen']),
-        'status'=> 'blocked',
-        'datum'=> $dates['datum'],
-        'time_von'=> $dates['time_von'],
-        'time_bis'=> $dates['time_bis']
+    private static $_vars = array(
+        "db" => array(
+            "config" => "cntnd_booking_config",
+            "bookings" => "cntnd_booking"
+        )
     );
-    if ($this->db->query($sql, $values)){
-      $this->informationEmail($post,$dates);
-      return true;
+
+    function __construct($daterange, $config_reset, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $lang, $client, $idart)
+    {
+        $this->daterange = $daterange;
+        $this->mailto = $mailto;
+        $this->subject = $subject;
+        $this->blocked_days = $blocked_days;
+        $this->one_click = $one_click;
+        $this->show_daterange = $show_daterange;
+        $this->show_past = $show_past;
+
+        $this->db = new cDb;
+        $this->client = $client;
+        $this->lang = $lang;
+        $this->idart = $idart;
+
+        $this->config = $this->config($config_reset);
     }
-    return false;
-  }
 
-  private function informationEmail($post,$dates){
-    $mailer = new cMailer();
-    $smarty = cSmartyFrontend::getInstance();
-    // use template to display email
-    $time_bis = new DateTime($dates['dat_email'].' '.$dates['time_bis']);
-    $time_bis->modify('+'.$this->interval.' minutes');
-
-    $smarty->assign('dat_email', $dates['dat_email']);
-    $smarty->assign('name', $post['name']);
-    $smarty->assign('adresse', $post['adresse']);
-    $smarty->assign('plz_ort', $post['plz_ort']);
-    $smarty->assign('telefon', $post['telefon']);
-    $smarty->assign('bemerkungen', $post['bemerkungen']);
-    $smarty->assign('email', $post['email']);
-    $smarty->assign('personen', $post['personen']);
-    $smarty->assign('time_von', $dates['time_von']);
-    $smarty->assign('time_bis', $time_bis->format('H:i'));
-    $body = $smarty->fetch('reservation-mail.html');
-    // Create a message
-    // todo betreff etc
-    $mail = Swift_Message::newInstance('Ihre Reservation')
-    ->setFrom($mailto)
-    ->setTo($post['email'])
-    ->setBody($body, 'text/html');
-
-    // Send the message
-    $result = $mailer->send($mail);
-    return $result;
-  }
-
-  public function load($daterange){
-    $dates = DateTimeUtil::getDatesFromDaterange($daterange);
-    $sql = "SELECT * FROM cntnd_booking WHERE datum between ':datum_von' AND ':datum_bis' ORDER BY datum, time_von";
-    $values = array(
-      'datum_von' => $dates[0]->format('Y-m-d'),
-      'datum_bis' => $dates[1]->format('Y-m-d')
-    );
-    $this->db->query($sql, $values);
-    $data=[];
-    while ($this->db->next_record()) {
-      $timestamp = strtotime($this->db->f('datum').' '.$this->db->f('time_von'));
-      $data[$timestamp]=array('time_von'=>$this->db->f('time_von'),'time_bis'=>$this->db->f('time_bis'),'status'=>$this->db->f('status'));
+    private function config($config_reset = false)
+    {
+        if (!$config_reset) {
+            $sql = "SELECT * FROM :table WHERE idart = :idart";
+            $values = array(
+                'table' => self::$_vars['db']['config'],
+                'idart' => $this->idart);
+            $result = $this->db->query($sql, $values);
+            if ($result->num_rows > 0) {
+                $config = array();
+                while ($this->db->nextRecord()) {
+                    $rs = $this->db->toObject();
+                    $recurrent = CntndUtil::toBool($rs->recurrent);
+                    $index = DateTimeUtil::getIndexFromDate($rs->date);
+                    if ($recurrent) {
+                        $index = DateTimeUtil::getRecurrentIndexFromDate($rs->date);
+                    }
+                    $config[$index][$rs->id] = array(
+                        'time' => DateTimeUtil::getReadableTimeFromDate($rs->time),
+                        'time_until' => $this->getTimeUntilOrEmpty($rs->time_until),
+                        'slots' => (int)$rs->slots,
+                        'comment' => $rs->comment,
+                        'recurrent' => $recurrent);
+                }
+                return $config;
+            }
+        } else {
+            $this->configReset($config_reset);
+        }
+        return NULL;
     }
-    return $data;
-  }
 
-  public function loadById($id){
-    $sql = "SELECT * FROM cntnd_booking WHERE id = :id";
-    $values = array('id' => $id);
-    $this->db->query($sql, $values);
-    return $this->db->getResultObject();
-  }
-
-  public function listAll(){
-    $sql = "SELECT * FROM cntnd_booking WHERE datum >= ':datum' ORDER BY datum, time_von";
-    $values = array('datum' => date('Y-m-d'));
-    $this->db->query($sql, $values);
-    $data=[];
-    while ($this->db->next_record()) {
-      $data_detail = array(
-        'id'=>$this->db->f('id'),
-        'name'=>$this->db->f('name'),
-        'adresse'=>$this->db->f('adresse'),
-        'status'=>$this->db->f('status'),
-        'plz_ort'=>$this->db->f('plz_ort'),
-        'email'=>$this->db->f('email'),
-        'telefon'=>$this->db->f('telefon'),
-        'personen'=>$this->db->f('personen'),
-        'bemerkungen'=>$this->db->f('bemerkungen'),
-        'time_von'=>$this->db->f('time_von'),
-        'time_bis'=>$this->db->f('time_bis')
-      );
-      $data[date('d.m.Y',strtotime($this->db->f('datum')))][]=$data_detail;
+    private function getTimeUntilOrEmpty($time)
+    {
+        if (!empty($time)) {
+            return DateTimeUtil::getReadableTimeFromTime($time);
+        }
+        return "";
     }
-    return $data;
-  }
 
-  public static function validateUpdate($post){
-    if (is_array($post)){
-      if (array_key_exists('resid',$post) && array_key_exists('action',$post)){
+    private function configReset($config_reset)
+    {
+        $blocked_days = json_decode(base64_decode($config_reset), true);
+        foreach ($blocked_days as $day => $blocked_day) {
+            if ($blocked_day) {
+                $this->removeConfig($day);
+            }
+        }
+        return $this->config();
+    }
+
+    private function removeConfig($day)
+    {
+        $sql = "DELETE FROM :table WHERE day = :day AND idart = :idart";
+        $values = array(
+            'table' => self::$_vars['db']['config'],
+            'day' => $day,
+            'idart' => $this->idart);
+        $this->db->query($sql, $values);
+    }
+
+    public function interval($time_slots, $from, $to)
+    {
+        $config = array();
+        $intervalConfig = $this->intervalConfig($time_slots, $from, $to);
+        foreach ($this->blocked_days as $day => $blocked) {
+            if (!$blocked) {
+                $date = DateTimeUtil::getFirstWeekday($this->daterange, $day);
+                $config['config'][DateTimeUtil::getIndexFromDate($date)] = $intervalConfig;
+            }
+        }
+        $this->saveConfig($config, true);
+    }
+
+    private function intervalConfig($time_slots, $from, $to)
+    {
+        $max = ($to - $from) / $time_slots;
+        $intervalConfig = array();
+        for ($i = 0; $i < $max; $i++) {
+            $slot = $i * $time_slots;
+            $slot_from = $from + $slot;
+            $slot_to = $slot_from + $time_slots;
+            $time_from = date('H:i', mktime(0, $slot_from));
+            $time_to = date('H:i', mktime(0, $slot_to));
+
+            $intervalConfig[$i]['time'] = $time_from;
+            $intervalConfig[$i]['time_until'] = $time_to;
+            $intervalConfig[$i]['slots'] = 1;
+            $intervalConfig[$i]['comment'] = "";
+            $intervalConfig[$i]['recurrent'] = 1;
+        }
+        return $intervalConfig;
+    }
+
+    public function hasConfig()
+    {
+        return !is_null($this->config());
+    }
+
+    public function renderConfig($recurrent)
+    {
+        if ($recurrent) {
+            $this->recurrentConfig();
+        } else {
+            $this->customConfig();
+        }
+    }
+
+    private function reccurentIndexByWeekday($weekday)
+    {
+        $index_date = DateTimeUtil::getIndexFromWeekday($weekday);
+        $index = DateTimeUtil::getIndexFromDate(DateTimeUtil::getDateFromDaterange($this->daterange, $index_date));
+        return $index;
+    }
+
+    private function recurrentConfig()
+    {
+        $config = $this->config();
+
+        foreach ($this->blocked_days as $day => $blocked) {
+            if (!$blocked) {
+                $index = $this->reccurentIndexByWeekday($day);
+
+                echo '<h5>' . DateTimeUtil::getLongWeekdayByIndex($day) . '</h5>';
+                echo '<table class="table order-list date__' . $index . '">';
+                echo '<thead><tr>';
+                echo '<th>Zeit</th>';
+                echo '<th>Anzahl Slots</th>';
+                echo '<th colspan="2">Bemerkung (wird angezeigt)</th>';
+                echo '</tr></thead>';
+
+                echo '<tbody>';
+
+                $i = 0;
+                if (!is_null($config) && array_key_exists($index, $config)) {
+                    foreach ($config[$index] as $id => $dateConfig) {
+                        echo '<tr data-row="' . $id . '">';
+                        echo '<td>';
+                        echo '<input type="time" name="config[' . $index . '][' . $id . '][time]" class="form-control" placeholder="Zeit von (HH:mm)" value="' . CntndUtil::emptyIfNull($dateConfig['time']) . '" required/>';
+                        echo '<input type="time" name="config[' . $index . '][' . $id . '][time_until]" class="form-control" placeholder="Zeit bis (HH:mm)" value="' . CntndUtil::emptyIfNull($dateConfig['time_until']) . '" />';
+                        echo '</td>';
+                        echo '<td><input type="number" name="config[' . $index . '][' . $id . '][slots]" class="form-control" placeholder="Anzahl Slots" value="' . $dateConfig['slots'] . '" required/></td>';
+                        echo '<td><input type="text" name="config[' . $index . '][' . $id . '][comment]" class="form-control" placeholder="Bemerkung" value="' . $dateConfig['comment'] . '" /></td>';
+                        echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+                        echo '</tr>';
+
+                        $i = $id + 1;
+                    }
+                }
+
+                echo '<tr data-row="' . $i . '">';
+                echo '<td>';
+                echo '<input type="time" name="config[' . $index . '][' . $i . '][time]" class="form-control" placeholder="Zeit von (HH:mm)" required/>';
+                echo '<input type="time" name="config[' . $index . '][' . $i . '][time_until]" class="form-control" placeholder="Zeit bis (HH:mm)" />';
+                echo '</td>';
+                echo '<td><input type="number" name="config[' . $index . '][' . $i . '][slots]" class="form-control" placeholder="Anzahl Slots" required/></td>';
+                echo '<td><input type="text" name="config[' . $index . '][' . $i . '][comment]" class="form-control" placeholder="Bemerkung"/></td>';
+                echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+                echo '</tr>';
+
+                echo '</tbody>';
+
+                echo '<tfoot><tr>';
+                echo '<td colspan="4">';
+                echo '<button type="button" class="btn btn-sm btn-light cntnd_booking-recurrent-config-add" data-date="' . $index . '">Zeit hinzufügen</button>&nbsp;';
+                echo '<button type="button" class="btn btn-sm btn-primary cntnd_booking-config-save">Speichern</button>';
+                echo '</td>';
+                echo '</tr></tfoot>';
+
+                echo '</table>';
+            }
+        }
+    }
+
+    private function customConfig()
+    {
+        $config = $this->config();
+        $daterange = DateTimeUtil::getDaterange($this->daterange, $this->blocked_days);
+
+        foreach ($daterange as $date) {
+            $index = DateTimeUtil::getIndexFromDate($date[0]);
+            echo '<h5>' . $date[1] . '</h5>';
+            echo '<table class="table order-list date__' . $index . '">';
+            echo '<thead><tr>';
+            echo '<th>Zeit</th>';
+            echo '<th>Anzahl Slots</th>';
+            echo '<th colspan="2">Bemerkung (wird angezeigt)</th>';
+            echo '</tr></thead>';
+
+            echo '<tbody>';
+
+            $i = 0;
+            if (!is_null($config) && array_key_exists($index, $config)) {
+                foreach ($config[$index] as $id => $dateConfig) {
+                    echo '<tr data-row="' . $id . '">';
+                    echo '<td><input type="time" name="config[' . $index . '][' . $id . '][time]" class="form-control" placeholder="Zeit (HH:mm)" value="' . $dateConfig['time'] . '" required/></td>';
+                    echo '<td><input type="number" name="config[' . $index . '][' . $id . '][slots]" class="form-control" placeholder="Anzahl Slots" value="' . $dateConfig['slots'] . '" required/></td>';
+                    echo '<td><input type="text" name="config[' . $index . '][' . $id . '][comment]" class="form-control" placeholder="Bemerkung" value="' . $dateConfig['comment'] . '" /></td>';
+                    echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+                    echo '</tr>';
+
+                    $i = $id + 1;
+                }
+            }
+
+            echo '<tr data-row="' . $i . '">';
+            echo '<td><input type="time" name="config[' . $index . '][' . $i . '][time]" class="form-control" placeholder="Zeit (HH:mm)" required/></td>';
+            echo '<td><input type="number" name="config[' . $index . '][' . $i . '][slots]" class="form-control" placeholder="Anzahl Slots" required/></td>';
+            echo '<td><input type="text" name="config[' . $index . '][' . $i . '][comment]" class="form-control" placeholder="Bemerkung"/></td>';
+            echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+            echo '</tr>';
+
+            echo '</tbody>';
+
+            echo '<tfoot><tr>';
+            echo '<td colspan="4">';
+            echo '<button type="button" class="btn btn-sm btn-light cntnd_booking-config-add" data-date="' . $index . '">Zeit hinzufügen</button>&nbsp;';
+            echo '<button type="button" class="btn btn-sm btn-primary cntnd_booking-config-save">Speichern</button>';
+            echo '</td>';
+            echo '</tr></tfoot>';
+
+            echo '</table>';
+        }
+    }
+
+    public function saveConfig($post, $interval = false)
+    {
+        $config = $this->config();
+
+        if (is_array($post['config'])) {
+            foreach ($post['config'] as $date => $dateConfig) {
+                if (is_null($config) || !array_key_exists($date, $config)) {
+                    $this->insertDateConfig($date, $dateConfig);
+                } else {
+                    if (!$interval) {
+                        $this->updateDateConfig($date, $dateConfig, $config[$date]);
+                    }
+                }
+            }
+        }
+
+        $this->config = $this->config();
+    }
+
+    private function checkDateTimeConfig($config)
+    {
+        if (array_key_exists('time', $config) &&
+            array_key_exists('slots', $config)) {
+            return (!empty($config['time']) && !empty($config['slots']));
+        }
+        return false;
+    }
+
+    private function insertDateConfig($date, $dateConfig)
+    {
+        foreach ($dateConfig as $config) {
+            $this->insertDateTimeConfig($date, $config);
+        }
+    }
+
+    private function insertDateTimeConfig($date, $config)
+    {
+        if ($this->checkDateTimeConfig($config)) {
+            $sql = "INSERT INTO :table (idart, date, time, time_until, day, slots, comment, recurrent) VALUES (:idart, ':date', ':time', ':until', :day, :slots, ':comment', :recurrent)";
+            $values = array(
+                'table' => self::$_vars['db']['config'],
+                'idart' => cSecurity::toInteger($this->idart),
+                'date' => DateTimeUtil::getInsertDate($date),
+                'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
+                'until' => DateTimeUtil::getInsertTimeOrNull($config['time_until']),
+                'day' => DateTimeUtil::getInsertDay($date),
+                'slots' => cSecurity::toInteger($config['slots']),
+                'comment' => $this->escape($config['comment']),
+                'recurrent' => CntndUtil::boolToInt($config['recurrent'])
+            );
+            $this->db->query($sql, $values);
+        }
+    }
+
+    private function updateDateConfig($date, $dateConfig, $originalConfig)
+    {
+        foreach ($dateConfig as $id => $config) {
+            if (array_key_exists($id, $originalConfig)) {
+                $this->updateDateTimeConfig($id, $date, $config);
+            } else {
+                $this->insertDateTimeConfig($date, $config);
+            }
+        }
+    }
+
+    private function updateDateTimeConfig($id, $date, $config)
+    {
+        if ($this->checkDateTimeConfig($config)) {
+            $sql = "UPDATE :table SET idart = :idart, date = ':date', time = ':time', time_until = ':until', day = :day, slots = :slots, comment = ':comment', recurrent = :recurrent WHERE id = :uid";
+            $values = array(
+                'table' => self::$_vars['db']['config'],
+                'uid' => cSecurity::toInteger($id),
+                'idart' => cSecurity::toInteger($this->idart),
+                'date' => DateTimeUtil::getInsertDate($date),
+                'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
+                'until' => DateTimeUtil::getInsertTimeOrNull($config['time_until']),
+                'day' => DateTimeUtil::getInsertDay($date),
+                'slots' => cSecurity::toInteger($config['slots']),
+                'comment' => $this->escape($config['comment']),
+                'recurrent' => CntndUtil::boolToInt($config['recurrent'])
+            );
+            $this->db->query($sql, $values);
+        }
+    }
+
+    public function daterange()
+    {
+        return $this->daterange;
+    }
+
+    private function recurrentIndexByDate($date)
+    {
+        $weekday = DateTimeUtil::getWeekdayIndex($date);
+        return $this->reccurentIndexByWeekday($weekday);
+    }
+
+    public function renderData($recurrent)
+    {
+        $displayData = array();
+        $daterange = DateTimeUtil::getDaterange($this->daterange, $this->blocked_days, $this->show_past);
+        $data = $this->load($this->daterange);
+        $config = $this->config();
+
+        foreach ($daterange as $date) {
+            $dateIndex = DateTimeUtil::getIndexFromDate($date[0]);
+            $index = $dateIndex;
+            if ($recurrent) {
+                $index = $this->recurrentIndexByDate($date[0]);
+            }
+            $entries = array();
+
+            if (!is_null($config) && array_key_exists($index, $config)) {
+                $dateConfigs = array();
+                foreach ($config[$index] as $dateConfig) {
+                    $dt = DateTimeUtil::getIndexFromDateAndTime($date[0], $dateConfig['time']);
+                    $time = substr($dt, -4);
+                    $dateConfig['time_index'] = $time;
+                    $dateConfig['time_value'] = $dt;
+                    $bookings = array();
+                    if (array_key_exists($dateIndex, $data) && array_key_exists($time, $data[$dateIndex])) {
+                        foreach ($data[$dateIndex][$time] as $slots) {
+                            $amount = $slots['amount'];
+                            if ($recurrent) {
+                                $amount = 1;
+                            }
+                            for ($i = 0; $i < $amount; $i++) {
+                                $bookings[] = $slots['status'];
+                            }
+                        }
+                    }
+
+                    for ($i = 0; $i < $dateConfig['slots']; $i++) {
+                        if (empty($bookings[$i])) {
+                            $bookings[$i] = "free";
+                        }
+                    }
+                    $dateConfig['bookings'] = $bookings;
+                    $dateConfig['type'] = $this->dayType($time);
+                    $dateConfigs[$time] = $dateConfig;
+                }
+
+                asort($dateConfigs);
+
+                $entries = array(
+                    "title" => $date[1],
+                    "dateConfigs" => $dateConfigs
+                );
+            }
+
+            $displayData[] = array(
+                "index" => $index,
+                "dateIndex" => $dateIndex,
+                "showDaterange" => DateTimeUtil::getShowDaterange($this->daterange, $this->show_daterange),
+                "entries" => $entries
+            );
+        }
+
+        return $displayData;
+    }
+
+    private function dayType($value) {
+        $time = intval($value);
+        if ($time>1200) {
+            return "afternoon";
+        }
+        return "morning";
+    }
+
+    public static function validate($post, $rand)
+    {
+        if (is_array($post) && $rand == $post['rand']) {
+            return (self::validateDates($post) && self::validateRequired($post));
+        }
+        return false;
+    }
+
+    public static function validateFree($post, $idart)
+    {
+        if (!self::isOneClick($post)) {
+            $date = key($post['bookings']);
+            $time = key($post['bookings'][$date]);
+            $slots = count($post['bookings'][$date][$time]);
+        } else {
+            $booking = $post['booking'];
+            $date = DateTimeUtil::getDateFromIndexDateTime($booking);
+            $time = DateTimeUtil::getTimeFromIndexDateTime($booking);
+            $slots = 1;
+        }
+
+        $db = new cDb;
+        $sql = "SELECT amount FROM :table WHERE idart = :idart AND time = ':time'";
+        $values = array(
+            'table' => self::$_vars['db']['bookings'],
+            'idart' => cSecurity::toInteger($idart),
+            'time' => DateTimeUtil::getInsertDateTime($date, $time));
+        $result = $db->query($sql, $values);
+        if ($result->num_rows > 0) {
+            $max = self::availableSlots($idart, $date, $time);
+            $amount = 0;
+            while ($db->next_record()) {
+                $amount = $amount + $db->f('amount');
+            }
+            $free = $max - $amount;
+            return ($free >= $slots);
+        }
         return true;
-      }
     }
-    return false;
-  }
 
-  public function update($post){
-    if ($post['action']=='delete'){
-      $sql = "DELETE FROM cntnd_booking WHERE id = :id";
-      $values = array('id' => $post['resid']);
-      $this->rejectionEmail($post);
+    private static function availableSlots($idart, $date, $time)
+    {
+        $db = new cDb;
+        $sql = "SELECT slots FROM :table WHERE idart = :idart AND time = ':time'";
+        $values = array(
+            'table' => self::$_vars['db']['config'],
+            'idart' => cSecurity::toInteger($idart),
+            'time' => DateTimeUtil::getInsertDateTime($date, $time));
+        $db->query($sql, $values);
+        return $db->getResultObject()->slots;
     }
-    else {
-      $sql = "UPDATE cntnd_booking SET status = ':status', mut_dat = NOW() WHERE id = :id";
-      $values = array(
-        'status' => 'reserved',
-        'id' => $post['resid']);
-      $this->confirmationEmail($post);
+
+    private static function validateDates($post)
+    {
+        if (!self::isOneClick($post)) {
+            return (array_key_exists('bookings', $post) && is_array($post['bookings']));
+        } else {
+            return (array_key_exists('booking', $post));
+        }
     }
-    return $this->db->query($sql, $values);
-  }
 
-  private function confirmationEmail($post){
-    $mailer = new cMailer();
-    $smarty = cSmartyFrontend::getInstance();
-    // use template to display email
-    $record = $this->loadById($post['resid']);
-    $smarty->assign('datum', DateTimeUtil::getReadableDate($record->datum));
-    $smarty->assign('time_von', DateTimeUtil::getReadableTimeFromDate($record->time_von));
-    $smarty->assign('time_bis', DateTimeUtil::getReadableTimeFromDate($record->time_bis));
-    $smarty->assign('bemerkungen', $record->bemerkungen);
-    $smarty->assign('message', $post['bemerkungen']);
-    $body = $smarty->fetch('reservation-definitiv-mail.html');
-    // Create a message
-    $mail = Swift_Message::newInstance('Ihre Reservationsbestätigung')
-    ->setFrom($mailto)
-    ->setTo($post['email'])
-    ->setBody($body, 'text/html');
+    private static function isOneClick($post)
+    {
+        if (array_key_exists('one_click_booking', $post)) {
+            return (bool)$post['one_click_booking'];
+        }
+        return false;
+    }
 
-    // Send the message
-    $result = $mailer->send($mail);
-    return $result;
-  }
+    private static function validateRequired($post)
+    {
+        $valid = false;
+        if (array_key_exists('required', $post)) {
+            $valid = true;
+            $required = json_decode(base64_decode($post['required']), true);
+            if (is_array($required)) {
+                foreach ($required as $value) {
+                    if (empty($post[$value])) {
+                        $valid = false;
+                    }
+                }
+            }
+        }
+        return $valid;
+    }
 
-  private function rejectionEmail($post){
-    $mailer = new cMailer();
-    $smarty = cSmartyFrontend::getInstance();
-    // use template to display email
-    $record = $this->loadById($post['resid']);
-    $smarty->assign('datum', DateTimeUtil::getReadableDate($record->datum));
-    $smarty->assign('time_von', DateTimeUtil::getReadableTimeFromDate($record->time_von));
-    $smarty->assign('time_bis', DateTimeUtil::getReadableTimeFromDate($record->time_bis));
-    $smarty->assign('bemerkungen', $record->bemerkungen);
-    $smarty->assign('message', $post['bemerkungen']);
-    $body = $smarty->fetch('reservation-abgelehnt-mail.html');
-    // Create a message
-    $mail = Swift_Message::newInstance('Ablehnung ihrer Reservation')
-    ->setFrom($mailto)
-    ->setTo($post['email'])
-    ->setBody($body, 'text/html');
+    public function store($post, $recurrent, $interval)
+    {
+        if (!$this->one_click) {
+            return $this->storeMany($post, $recurrent);
+        } else {
+            return $this->storeOne($post, $recurrent);
+        }
+    }
 
-    // Send the message
-    $result = $mailer->send($mail);
-    return $result;
-  }
+    private function storeMany($post, $recurrent)
+    {
+        $date = key($post['bookings']);
+        $time = key($post['bookings'][$date]);
+        $amount = count($post['bookings'][$date][$time]);
+        if ($recurrent) {
+            $amount = $post['personen'];
+        }
+
+        $sql = "INSERT INTO :table (idart, date, time, amount, name, address, po_box, email, phone, comment) VALUES (:idart, ':date', ':time', :amount, ':name', ':address', ':po_box', ':email', ':phone', ':comment')";
+        $values = array(
+            'table' => self::$_vars['db']['bookings'],
+            'idart' => cSecurity::toInteger($this->idart),
+            'date' => DateTimeUtil::getInsertDate($date),
+            'time' => DateTimeUtil::getInsertDateTime($date, $time),
+            'amount' => cSecurity::toInteger($amount),
+            'name' => $this->escape($post['name']),
+            'address' => $this->escape($post['adresse']),
+            'po_box' => $this->escape($post['plz_ort']),
+            'email' => $this->escape($post['email']),
+            'phone' => $this->escape($post['telefon']),
+            'comment' => $this->escape($post['bemerkungen'])
+        );
+        if ($this->db->query($sql, $values)) {
+            $this->informationEmail($post, $date, $time, $amount);
+            return true;
+        }
+        return false;
+    }
+
+    private function storeOne($post, $recurrent)
+    {
+        $booking = $post['booking'];
+        $date = DateTimeUtil::getDateFromIndexDateTime($booking);
+        $time = DateTimeUtil::getTimeFromIndexDateTime($booking);
+
+        $amount = 1;
+        if ($recurrent) {
+            $amount = $post['personen'];
+        }
+
+        $sql = "INSERT INTO :table (idart, date, time, amount, name, address, po_box, email, phone, comment) VALUES (:idart, ':date', ':time', :amount, ':name', ':address', ':po_box', ':email', ':phone', ':comment')";
+        $values = array(
+            'table' => self::$_vars['db']['bookings'],
+            'idart' => cSecurity::toInteger($this->idart),
+            'date' => DateTimeUtil::getInsertDate($date),
+            'time' => DateTimeUtil::getInsertDateTime($date, $time),
+            'amount' => cSecurity::toInteger($amount),
+            'name' => $this->escape($post['name']),
+            'address' => $this->escape($post['adresse']),
+            'po_box' => $this->escape($post['plz_ort']),
+            'email' => $this->escape($post['email']),
+            'phone' => $this->escape($post['telefon']),
+            'comment' => $this->escape($post['bemerkungen'])
+        );
+        if ($this->db->query($sql, $values)) {
+            $this->informationEmail($post, $date, $time, $amount);
+            return true;
+        }
+        return false;
+    }
+
+    // legacy
+    private function informationEmail($post, $date, $time, $amount)
+    {
+        // use template to display email
+        $smarty = cSmartyFrontend::getInstance();
+        $smarty->assign('date', DateTimeUtil::getReadableDate($date));
+        $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($time));
+        $smarty->assign('name', $post['name']);
+        $smarty->assign('adresse', $post['adresse']);
+        $smarty->assign('plz_ort', $post['plz_ort']);
+        $smarty->assign('telefon', $post['telefon']);
+        $smarty->assign('bemerkungen', $post['bemerkungen']);
+        $smarty->assign('email', $post['email']);
+        $smarty->assign('personen', $amount);
+        $smarty->assign('sauna', $this->subject['booking_title']);
+        $body = $smarty->fetch('email-booking.html');
+
+        if (!$this->debug) {
+            $mailer = new cMailer();
+
+            // Create a message
+            $mail = Swift_Message::newInstance($this->subject['default'])
+                ->setFrom($this->mailto)
+                ->setTo($post['email'])
+                ->setBody($body, 'text/html');
+
+            // Send the message
+            $result = $mailer->send($mail);
+        } else {
+            var_dump($body);
+            $result = true;
+        }
+        return $result;
+    }
+
+    public function load($daterange)
+    {
+        $dates = DateTimeUtil::getDatesFromDaterange($daterange, $this->show_past);
+        $datum_von = DateTimeUtil::getInsertDate($dates[0]);
+        $sql = "SELECT * FROM :table WHERE idart = :idart AND date between ':datum_von' AND ':datum_bis' ORDER BY date, time";
+        $values = array(
+            'table' => self::$_vars['db']['bookings'],
+            'idart' => $this->idart,
+            'datum_von' => $datum_von,
+            'datum_bis' => DateTimeUtil::getInsertDate($dates[1])
+        );
+        $this->db->query($sql, $values);
+        $data = [];
+        while ($this->db->next_record()) {
+            $index = DateTimeUtil::getIndexFromDate($this->db->f('date'));
+            $time = DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
+            $data[$index][$time][$this->db->f('id')] = array(
+                'amount' => $this->db->f('amount'),
+                'status' => $this->db->f('status'));
+        }
+        return $data;
+    }
+
+    public function loadById($id)
+    {
+        $sql = "SELECT * FROM :table WHERE id = :id";
+        $values = array(
+            'table' => self::$_vars['db']['bookings'],
+            'id' => $id);
+        $this->db->query($sql, $values);
+        return $this->db->getResultObject();
+    }
+
+    public function listAll($past = false)
+    {
+        $sql = "SELECT * FROM :table WHERE idart = :idart AND date >= ':datum' ORDER BY date, time";
+        if ($past) {
+            $sql = "SELECT * FROM :table WHERE idart = :idart ORDER BY date, time";
+        }
+        $values = array(
+            'table' => self::$_vars['db']['bookings'],
+            'idart' => cSecurity::toInteger($this->idart),
+            'datum' => date('Y-m-d'));
+        $this->db->query($sql, $values);
+        $data = [];
+        while ($this->db->next_record()) {
+            $title = '';
+            $is_past = false;
+            if ($past) {
+                $is_past = DateTimeUtil::isPast($this->db->f('date'));
+            }
+            $newDate = DateTimeUtil::getIndexFromDate($this->db->f('date'));
+            $newTime = DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
+            $readableTime = DateTimeUtil::getReadableTimeFromDate($this->db->f('time'));
+            if ($time != $newTime || $date != $newDate) {
+                $title = "Zeit: " . $readableTime;
+            }
+            $data_detail = array(
+                'id' => $this->db->f('id'),
+                'time' => $readableTime,
+                'name' => $this->db->f('name'),
+                'adresse' => $this->db->f('address'),
+                'status' => $this->db->f('status'),
+                'plz_ort' => $this->db->f('po_box'),
+                'email' => $this->db->f('email'),
+                'telefon' => $this->db->f('phone'),
+                'personen' => $this->db->f('amount'),
+                'bemerkungen' => $this->db->f('comment'),
+                'title' => $title,
+                'past' => $is_past);
+            $data[date('d.m.Y', strtotime($this->db->f('date')))][] = $data_detail;
+            $time = DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
+            $date = DateTimeUtil::getIndexFromDate($this->db->f('date'));
+        }
+        return $data;
+    }
+
+    public static function validateUpdate($post)
+    {
+        if (is_array($post)) {
+            if (array_key_exists('resid', $post) && array_key_exists('action', $post)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function update($post)
+    {
+        if ($post['action'] == 'delete') {
+            $sql = "DELETE FROM :table WHERE id = :id";
+            $values = array(
+                'table' => self::$_vars['db']['bookings'],
+                'id' => $post['resid']);
+            $this->rejectionEmail($post);
+        } else {
+            $sql = "UPDATE :table SET status = ':status', mut_date = NOW() WHERE id = :id";
+            $values = array(
+                'table' => self::$_vars['db']['bookings'],
+                'status' => 'reserved',
+                'id' => $post['resid']);
+            $this->confirmationEmail($post);
+        }
+        return $this->db->query($sql, $values);
+    }
+
+    // legacy
+    private function confirmationEmail($post)
+    {
+        // use template to display email
+        $smarty = cSmartyFrontend::getInstance();
+        $record = $this->loadById($post['resid']);
+        $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
+        $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
+        $smarty->assign('personen', $record->amount);
+        $smarty->assign('bemerkungen', $record->comment);
+        $smarty->assign('message', $post['bemerkungen']);
+        $smarty->assign('sauna', $this->subject['booking_title']);
+        $body = $smarty->fetch('email-reserved.html');
+
+        if (!$this->debug) {
+            $mailer = new cMailer();
+
+            // Create a message
+            $mail = Swift_Message::newInstance($this->subject['reserved'])
+                ->setFrom($this->mailto)
+                ->setTo($record->email)
+                ->setBody($body, 'text/html');
+
+            // Send the message
+            $result = $mailer->send($mail);
+        } else {
+            var_dump($body);
+            $result = true;
+        }
+        return $result;
+    }
+
+    // legacy
+    private function rejectionEmail($post)
+    {
+        // use template to display email
+        $smarty = cSmartyFrontend::getInstance();
+        $record = $this->loadById($post['resid']);
+        $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
+        $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
+        $smarty->assign('personen', $record->amount);
+        $smarty->assign('bemerkungen', $record->comment);
+        $smarty->assign('message', $post['bemerkungen']);
+        $smarty->assign('sauna', $this->subject['booking_title']);
+        $body = $smarty->fetch('email-declined.html');
+
+        if (!$this->debug) {
+            $mailer = new cMailer();
+            // Create a message
+            $mail = Swift_Message::newInstance($this->subject['declined'])
+                ->setFrom($this->mailto)
+                ->setTo($record->email)
+                ->setBody($body, 'text/html');
+
+            // Send the message
+            $result = $mailer->send($mail);
+        } else {
+            var_dump($body);
+            $result = true;
+        }
+        return $result;
+    }
+
+    private function escape($string)
+    {
+        $escaped = htmlentities($string, ENT_QUOTES, "UTF-8");
+        return $this->db->escape($escaped);
+    }
 }
+
 ?>

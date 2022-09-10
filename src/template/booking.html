@@ -1,0 +1,9 @@
+<!-- cntnd_booking/template/booking.html -->
+{if $interval}
+    {include file="cntnd_booking/template/booking-interval.html" data=$data pagination=$pagination one_click=$one_click}
+{else if $recurrent}
+    {include file="cntnd_booking/template/booking-recurrent.html" data=$data pagination=$pagination one_click=$one_click}
+{else}
+    {include file="cntnd_booking/template/booking-default.html" data=$data pagination=$pagination one_click=$one_click}
+{/if}
+<!-- cntnd_booking/template/booking.html -->
