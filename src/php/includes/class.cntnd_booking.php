@@ -16,6 +16,7 @@ class CntndBooking
     private $one_click;
     private $show_daterange;
     private $show_past;
+    private $interval_slots;
 
     private $db;
     private $client;
@@ -32,7 +33,7 @@ class CntndBooking
         )
     );
 
-    function __construct($daterange, $config_reset, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart)
+    function __construct($daterange, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart)
     {
         $this->daterange = $daterange;
         $this->mailto = $mailto;
@@ -41,6 +42,7 @@ class CntndBooking
         $this->one_click = $one_click;
         $this->show_daterange = $show_daterange;
         $this->show_past = $show_past;
+        $this->interval_slots = $interval_slots;
 
         $this->db = new cDb;
         $this->client = $client;
@@ -297,12 +299,6 @@ class CntndBooking
         return $this->daterange;
     }
 
-    private function recurrentIndexByDate($date)
-    {
-        $weekday = DateTimeUtil::getWeekdayIndex($date);
-        return $this->reccurentIndexByWeekday($weekday);
-    }
-
     public function renderData()
     {
         $displayData = array();
@@ -319,9 +315,11 @@ class CntndBooking
                 $dateConfigs = array();
                 foreach ($config['config'][$index] as $dateConfig) {
                     $dt = DateTimeUtil::getIndexFromDateAndTime($date[0], $dateConfig['time']);
+                    $until = str_replace(":","",$dateConfig['time_until']);
                     $time = substr($dt, -4);
                     $dateConfig['time_index'] = $time;
                     $dateConfig['time_value'] = $dt;
+                    $dateConfig['time_interval'] = $time."-".$until;
                     $bookings = array();
                     if (array_key_exists($dateIndex, $data) && array_key_exists($time, $data[$dateIndex])) {
                         foreach ($data[$dateIndex][$time] as $slots) {
@@ -346,7 +344,9 @@ class CntndBooking
 
                 $entries = array(
                     "title" => $date[1],
-                    "dateConfigs" => $dateConfigs
+                    "dateConfigs" => $dateConfigs,
+                    "morning" => $this->isDayTypeBlocked($data[$dateIndex], "morning"),
+                    "afternoon" => $this->isDayTypeBlocked($data[$dateIndex], "afternoon")
                 );
             }
 
@@ -359,6 +359,19 @@ class CntndBooking
         }
 
         return $displayData;
+    }
+
+    private function isDayTypeBlocked($data, $dayType) {
+        $blocked = false;
+        if (is_array($data)) {
+            foreach($data as $key => $date) {
+                $type = $this->dayType($key);
+                if ($type == $dayType) {
+                    $blocked = true;
+                }
+            }
+        }
+        return $blocked;
     }
 
     private function dayType($value)
@@ -410,6 +423,37 @@ class CntndBooking
         return true;
     }
 
+    public static function validateAvailability($post, $idart) {
+        $available = true;
+        $db = new cDb;
+
+        $date = key($post['bookings']);
+        $times = array_keys($post['bookings'][$date]);
+        $check_time = DateTimeUtil::getStringsFromTimes($times[0]);
+        $check_until = DateTimeUtil::getStringsFromTimes(end($times));
+
+        $sql = "SELECT * FROM :table WHERE idart = :idart AND date = ':date' ORDER BY time";
+        $values = array(
+            'table' => self::$_vars['db']['config'],
+            'idart' => cSecurity::toInteger($idart),
+            'date' => DateTimeUtil::getInsertDate($date));
+        $db->query($sql, $values);
+        //var_dump($db->prepare($sql, $values));
+        while ($db->next_record()) {
+            $blocked_time = DateTimeUtil::getIndexFromDateTime($db->f('time'));
+            $blocked_until = DateTimeUtil::getIndexFromDateTime($db->f('until'));
+            if (
+                ($blocked_time>=$check_time && $blocked_time< $check_until) ||
+                ($blocked_until> $check_time && $blocked_until<=$check_until) ||
+                ($blocked_time<=$check_time && $blocked_until>=$check_until)
+            ){
+                $available=false;
+            }
+        }
+
+        return $available;
+    }
+
     private static function availableSlots($idart, $date, $time)
     {
         $db = new cDb;
@@ -456,30 +500,31 @@ class CntndBooking
         return $valid;
     }
 
-    public function store($post, $recurrent, $interval)
+    public function store($post)
     {
         if (!$this->one_click) {
-            return $this->storeMany($post, $recurrent);
+            return $this->storeMany($post);
         } else {
-            return $this->storeOne($post, $recurrent);
+            return $this->storeOne($post);
         }
     }
 
-    private function storeMany($post, $recurrent)
+    private function storeMany($post)
     {
         $date = key($post['bookings']);
-        $time = key($post['bookings'][$date]);
-        $amount = count($post['bookings'][$date][$time]);
-        if ($recurrent) {
-            $amount = $post['personen'];
-        }
+        $times = array_keys($post['bookings'][$date]);
+        asort($times);
+        $time = DateTimeUtil::getStringsFromTimes($times[0]);
+        $until = DateTimeUtil::getStringsFromTimes(end($times));
+        $amount = count($post['bookings'][$date]);
 
-        $sql = "INSERT INTO :table (idart, date, time, amount, name, address, po_box, email, phone, comment) VALUES (:idart, ':date', ':time', :amount, ':name', ':address', ':po_box', ':email', ':phone', ':comment')";
+        $sql = "INSERT INTO :table (idart, date, time, until, amount, name, address, po_box, email, phone, comment) VALUES (:idart, ':date', ':time', ':until', :amount, ':name', ':address', ':po_box', ':email', ':phone', ':comment')";
         $values = array(
             'table' => self::$_vars['db']['bookings'],
             'idart' => cSecurity::toInteger($this->idart),
             'date' => DateTimeUtil::getInsertDate($date),
-            'time' => DateTimeUtil::getInsertDateTime($date, $time),
+            'time' => DateTimeUtil::getInsertDateTime($date, $time[0]),
+            'until' => DateTimeUtil::getInsertDateTime($date, $until[1]),
             'amount' => cSecurity::toInteger($amount),
             'name' => $this->escape($post['name']),
             'address' => $this->escape($post['adresse']),
@@ -489,7 +534,7 @@ class CntndBooking
             'comment' => $this->escape($post['bemerkungen'])
         );
         if ($this->db->query($sql, $values)) {
-            $this->informationEmail($post, $date, $time, $amount);
+            $this->informationEmail($post, $date, $time[0], $until[1], $amount);
             return true;
         }
         return false;
@@ -521,19 +566,20 @@ class CntndBooking
             'comment' => $this->escape($post['bemerkungen'])
         );
         if ($this->db->query($sql, $values)) {
-            $this->informationEmail($post, $date, $time, $amount);
+            $this->informationEmail($post, $date, $time[0], $time[1], $amount);
             return true;
         }
         return false;
     }
 
     // legacy
-    private function informationEmail($post, $date, $time, $amount)
+    private function informationEmail($post, $date, $time, $until, $amount)
     {
         // use template to display email
         $smarty = cSmartyFrontend::getInstance();
         $smarty->assign('date', DateTimeUtil::getReadableDate($date));
         $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($time));
+        $smarty->assign('until', DateTimeUtil::getReadableTimeFromDate($until));
         $smarty->assign('name', $post['name']);
         $smarty->assign('adresse', $post['adresse']);
         $smarty->assign('plz_ort', $post['plz_ort']);
@@ -577,9 +623,15 @@ class CntndBooking
         while ($this->db->next_record()) {
             $index = DateTimeUtil::getIndexFromDate($this->db->f('date'));
             $time = DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
-            $data[$index][$time][$this->db->f('id')] = array(
-                'amount' => $this->db->f('amount'),
-                'status' => $this->db->f('status'));
+            $until = DateTimeUtil::getIndexFromDateTime($this->db->f('until'));
+            $slot = ($this->interval_slots/60*100);
+            $max = ($until-$time)/$slot;
+            for($i=0;$i<$max;$i++){
+                $dataIndex = str_pad((intval($time) + ($i * $slot)), 4, "0", STR_PAD_LEFT);
+                $data[$index][$dataIndex][$this->db->f('id')] = array(
+                    'amount' => $this->db->f('amount'),
+                    'status' => $this->db->f('status'));
+            }
         }
         return $data;
     }
@@ -675,6 +727,7 @@ class CntndBooking
         $record = $this->loadById($post['resid']);
         $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
         $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
+        $smarty->assign('until', DateTimeUtil::getReadableTimeFromDate($record->until));
         $smarty->assign('personen', $record->amount);
         $smarty->assign('bemerkungen', $record->comment);
         $smarty->assign('message', $post['bemerkungen']);
@@ -706,6 +759,7 @@ class CntndBooking
         $record = $this->loadById($post['resid']);
         $smarty->assign('date', DateTimeUtil::getReadableDate($record->date));
         $smarty->assign('time', DateTimeUtil::getReadableTimeFromDate($record->time));
+        $smarty->assign('until', DateTimeUtil::getReadableTimeFromDate($record->until));
         $smarty->assign('personen', $record->amount);
         $smarty->assign('bemerkungen', $record->comment);
         $smarty->assign('message', $post['bemerkungen']);

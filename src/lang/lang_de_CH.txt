@@ -23,6 +23,7 @@ FAILURE=Es gab ein Fehler, ihre Reservation wurde nicht gespeichert.
 VALIDATION=Es gab ein Fehler:
 VALIDATION_REQUIRED=Bitte füllen Sie alle Felder mit "*" aus
 VALIDATION_DATES=Bitte wählen Sie mindestens einen freien Platz aus
+VALIDATION_CONSECUTIVE=Bitte wählen Sie aufeinanderfolgende Slots
 VALIDATION_FREE_SLOTS=Es ist möglich, dass in der Zwischenzeit alle Slots ausgebucht oder zu wenig Freie Slots verfügbar sind. Bitte wählen sie einen anderen Zeitraum aus.
 ADMIN_MODE=Administrator Modus
 EMAIL_SEND=Ja, senden

@@ -57,7 +57,7 @@ if ($editmode) {
 
 // other/vars
 $smarty = cSmartyFrontend::getInstance();
-$booking = new CntndBooking($daterange, $config_reset, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart);
+$booking = new CntndBooking($daterange, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart);
 
 if (empty($daterange)) {
     echo '<div class="cntnd_alert cntnd_alert-primary">';
@@ -162,9 +162,8 @@ if ($editmode) {
     // PUBLIC
     if ($_POST) {
         if (CntndBooking::validate($_POST, $_SESSION['rand'])) {
-            if (CntndBooking::validateFree($_POST, $idart)) {
-                var_dump($_POST);
-                $success = $booking->store($_POST, $recurrent, $interval);
+            if (CntndBooking::validateFree($_POST, $idart) && CntndBooking::validateAvailability($_POST, $idart)) {
+                $success = $booking->store($_POST);
                 $error = !$success;
                 $error_free = false;
             } else {
@@ -201,6 +200,7 @@ if ($editmode) {
     echo '<ul>';
     echo '<li class="cntnd_booking-validation-required">' . mi18n("VALIDATION_REQUIRED") . '</li>';
     echo '<li class="cntnd_booking-validation-dates">' . mi18n("VALIDATION_DATES") . '</li>';
+    echo '<li class="cntnd_booking-validation-consecutive">' . mi18n("VALIDATION_CONSECUTIVE") . '</li>';
     echo '</ul>';
     echo '</div>';
     if ($error) {
@@ -211,8 +211,6 @@ if ($editmode) {
     }
 
     // display form
-    $smarty->assign('recurrent', $recurrent);
-    $smarty->assign('interval', $interval);
     $smarty->display('form.html');
 
     echo '<button type="submit" class="btn btn-primary">' . mi18n("SAVE") . '</button>';

@@ -78,6 +78,11 @@ class DateTimeUtil
         return explode(" - ", $daterange);
     }
 
+    public static function getStringsFromTimes($times)
+    {
+        return explode("-", $times);
+    }
+
     public static function getDaysFromDateRange($daterange, $past = true)
     {
         $dates = self::getDatesFromDaterange($daterange, $past);

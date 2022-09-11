@@ -6,13 +6,25 @@
             {if $reservation.dateIndex>$reservation.showDaterange}
                 {assign var="show_date" value='not-in-range hide'}
             {/if}
+            {assign var="morning" value=''}
+            {if $reservation.entries.morning}
+                {assign var="morning" value='disabled'}
+            {/if}
+            {assign var="afternoon" value=''}
+            {if $reservation.entries.afternoon}
+                {assign var="afternoon" value='disabled'}
+            {/if}
+            {assign var="day" value=''}
+            {if $reservation.entries.morning || $reservation.entries.afternoon}
+                {assign var="day" value='disabled'}
+            {/if}
             <tr class="cntnd_booking_slots--interval {$show_date}" data-slot="{$reservation.dateIndex}">
                 <th rowspan="2">
                     <span class="cntnd_booking-date_interval" data-slot="{$reservation.dateIndex}">{$reservation.entries.title}</span>
                     <ul class="cntnd_booking--actions">
-                        <li class="cntnd_booking--action" data-slot="{$reservation.dateIndex}" data-action-type="morning">Vormittag</li>
-                        <li class="cntnd_booking--action" data-slot="{$reservation.dateIndex}" data-action-type="afternoon">Nachmittag</li>
-                        <li class="cntnd_booking--action" data-slot="{$reservation.dateIndex}" data-action-type="all">Ganzer Tag</li>
+                        <li class="cntnd_booking--action {$morning}" data-slot="{$reservation.dateIndex}" data-action-type="morning">Vormittag</li>
+                        <li class="cntnd_booking--action {$afternoon}" data-slot="{$reservation.dateIndex}" data-action-type="afternoon">Nachmittag</li>
+                        <li class="cntnd_booking--action {$day}" data-slot="{$reservation.dateIndex}" data-action-type="all">Ganzer Tag</li>
                     </ul>
                 </th>
                 {foreach name=config item=config from=$reservation.entries.dateConfigs}
@@ -29,16 +41,16 @@
                 <td class="{$config.type}">
                     <div class="d-flex cntnd_booking_slots--vertical" data-slot="{$reservation.dateIndex}-{$config.time_index}">
                         {foreach name=booking item=booking from=$config.bookings}
-                        {assign var="disabled" value=''}
-                        {if $booking neq 'free'}
-                        {assign var="disabled" value='disabled="disabled"'}
-                        {/if}
+                            {assign var="disabled" value=''}
+                            {if $booking neq 'free'}
+                                {assign var="disabled" value='disabled="disabled"'}
+                            {/if}
 
-                        {if $one_click}
-                        {include file="cntnd_booking/template/booking_slot-oneclick.html" status=$booking disabled=$disabled value=$config.time_value}
-                        {else}
-                        {include file="cntnd_booking/template/booking_slot-default.html" status=$booking disabled=$disabled dateIndex=$reservation.dateIndex timeIndex=$config.time_index}
-                        {/if}
+                            {if $one_click}
+                                {include file="cntnd_booking/template/booking_slot-oneclick.html" status=$booking disabled=$disabled value=$config.time_value}
+                            {else}
+                                {include file="cntnd_booking/template/booking_slot-default.html" status=$booking disabled=$disabled dateIndex=$reservation.dateIndex timeIndex=$config.time_index interval=$config.time_interval}
+                            {/if}
                         {/foreach}
                     </div>
                 </td>

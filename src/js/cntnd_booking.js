@@ -22,11 +22,13 @@ $(document).ready(function(){
 
 
   $('.cntnd_booking--action').click(function(){
-    var slot = $(this).attr('data-slot');
-    toggleInterval(slot,"cntnd_booking_slots--interval");
+    if (!$(this).hasClass("disabled")) {
+      var slot = $(this).attr('data-slot');
+      toggleInterval(slot, "cntnd_booking_slots--interval");
 
-    var type = $(this).attr('data-action-type');
-    toggleType(type);
+      var type = $(this).attr('data-action-type');
+      toggleType(type);
+    }
   });
 
   function toggleInterval(slot, className) {
@@ -80,6 +82,33 @@ $(document).ready(function(){
     return $('.cntnd_booking-checkbox:checked').length>0;
   }
 
+  function validateBookings(){
+    if ($('#cntnd_booking-one_click_booking').val()){
+      return $(".cntnd_booking-radio[name='booking']").is(":checked");
+    }
+    return $('.cntnd_booking-checkbox:checked').length>0;
+  }
+
+  function consecutiveBookings(){
+    var result = true;
+    var regex = /([^[]+(?=]))/g;
+    var elements = $('.cntnd_booking-checkbox:checked');
+    console.log(elements.length);
+    if (elements.length>1) {
+      var last = 0;
+      elements.each(function( index ) {
+        var slot = $(this).attr("name");
+        var found = slot.match(regex);
+        var times = found[1].split('-');
+        if (last!==0 && last!==times[0]) {
+          result = false;
+        }
+        last = times[1];
+      });
+    }
+    return result;
+  }
+
   $('#cntnd_booking-reservation').submit(function() {
     $('.cntnd_booking-validation').addClass('hide');
     $('.cntnd_booking-validation-required').hide();
@@ -88,13 +117,17 @@ $(document).ready(function(){
       return ($(this).val()==='');
     });
     var bookings=validateBookings();
-    if (!bookings || required.length>0){
+    var consecutive=consecutiveBookings();
+    if (!bookings || !consecutive || required.length>0){
       $('.cntnd_booking-validation').removeClass('hide');
       if (required.length>0){
         $('.cntnd_booking-validation-required').show();
       }
       if (!bookings){
         $('.cntnd_booking-validation-dates').show();
+      }
+      if (!consecutive){
+        $('.consecutive').show();
       }
       return false;
     }

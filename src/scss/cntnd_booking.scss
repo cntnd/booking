@@ -48,6 +48,12 @@
 		font-weight: normal;
 		list-style-type: none;
 		margin: 0.25em 0;
+
+		&.disabled {
+			color: silver;
+			text-decoration: none;
+			cursor: auto;
+		}
 	}
 }
 
