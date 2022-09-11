@@ -6,7 +6,7 @@ cInclude('module', 'includes/class.cntnd_util.php');
 /**
  * cntnd_booking Class
  */
-class CntndSimpleBooking
+class CntndBooking
 {
 
     private $daterange;
@@ -32,7 +32,7 @@ class CntndSimpleBooking
         )
     );
 
-    function __construct($daterange, $config_reset, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $lang, $client, $idart)
+    function __construct($daterange, $config_reset, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart)
     {
         $this->daterange = $daterange;
         $this->mailto = $mailto;
@@ -47,81 +47,7 @@ class CntndSimpleBooking
         $this->lang = $lang;
         $this->idart = $idart;
 
-        $this->config = $this->config($config_reset);
-    }
-
-    private function config($config_reset = false)
-    {
-        if (!$config_reset) {
-            $sql = "SELECT * FROM :table WHERE idart = :idart";
-            $values = array(
-                'table' => self::$_vars['db']['config'],
-                'idart' => $this->idart);
-            $result = $this->db->query($sql, $values);
-            if ($result->num_rows > 0) {
-                $config = array();
-                while ($this->db->nextRecord()) {
-                    $rs = $this->db->toObject();
-                    $recurrent = CntndUtil::toBool($rs->recurrent);
-                    $index = DateTimeUtil::getIndexFromDate($rs->date);
-                    if ($recurrent) {
-                        $index = DateTimeUtil::getRecurrentIndexFromDate($rs->date);
-                    }
-                    $config[$index][$rs->id] = array(
-                        'time' => DateTimeUtil::getReadableTimeFromDate($rs->time),
-                        'time_until' => $this->getTimeUntilOrEmpty($rs->time_until),
-                        'slots' => (int)$rs->slots,
-                        'comment' => $rs->comment,
-                        'recurrent' => $recurrent);
-                }
-                return $config;
-            }
-        } else {
-            $this->configReset($config_reset);
-        }
-        return NULL;
-    }
-
-    private function getTimeUntilOrEmpty($time)
-    {
-        if (!empty($time)) {
-            return DateTimeUtil::getReadableTimeFromTime($time);
-        }
-        return "";
-    }
-
-    private function configReset($config_reset)
-    {
-        $blocked_days = json_decode(base64_decode($config_reset), true);
-        foreach ($blocked_days as $day => $blocked_day) {
-            if ($blocked_day) {
-                $this->removeConfig($day);
-            }
-        }
-        return $this->config();
-    }
-
-    private function removeConfig($day)
-    {
-        $sql = "DELETE FROM :table WHERE day = :day AND idart = :idart";
-        $values = array(
-            'table' => self::$_vars['db']['config'],
-            'day' => $day,
-            'idart' => $this->idart);
-        $this->db->query($sql, $values);
-    }
-
-    public function interval($time_slots, $from, $to)
-    {
-        $config = array();
-        $intervalConfig = $this->intervalConfig($time_slots, $from, $to);
-        foreach ($this->blocked_days as $day => $blocked) {
-            if (!$blocked) {
-                $date = DateTimeUtil::getFirstWeekday($this->daterange, $day);
-                $config['config'][DateTimeUtil::getIndexFromDate($date)] = $intervalConfig;
-            }
-        }
-        $this->saveConfig($config, true);
+        $this->config = $this->intervalConfig($interval_slots, $timerange_from, $timerange_to);
     }
 
     private function intervalConfig($time_slots, $from, $to)
@@ -144,9 +70,15 @@ class CntndSimpleBooking
         return $intervalConfig;
     }
 
-    public function hasConfig()
+    private function config()
     {
-        return !is_null($this->config());
+        $config = array();
+        foreach ($this->blocked_days as $day => $blocked) {
+            if (!$blocked) {
+                $config['config'][$day] = $this->config;
+            }
+        }
+        return $config;
     }
 
     public function renderConfig($recurrent)
@@ -371,7 +303,7 @@ class CntndSimpleBooking
         return $this->reccurentIndexByWeekday($weekday);
     }
 
-    public function renderData($recurrent)
+    public function renderData()
     {
         $displayData = array();
         $daterange = DateTimeUtil::getDaterange($this->daterange, $this->blocked_days, $this->show_past);
@@ -380,15 +312,12 @@ class CntndSimpleBooking
 
         foreach ($daterange as $date) {
             $dateIndex = DateTimeUtil::getIndexFromDate($date[0]);
-            $index = $dateIndex;
-            if ($recurrent) {
-                $index = $this->recurrentIndexByDate($date[0]);
-            }
+            $index = DateTimeUtil::getWeekdayIndex($date[0]);
             $entries = array();
 
-            if (!is_null($config) && array_key_exists($index, $config)) {
+            if (!is_null($config)) {
                 $dateConfigs = array();
-                foreach ($config[$index] as $dateConfig) {
+                foreach ($config['config'][$index] as $dateConfig) {
                     $dt = DateTimeUtil::getIndexFromDateAndTime($date[0], $dateConfig['time']);
                     $time = substr($dt, -4);
                     $dateConfig['time_index'] = $time;
@@ -396,10 +325,7 @@ class CntndSimpleBooking
                     $bookings = array();
                     if (array_key_exists($dateIndex, $data) && array_key_exists($time, $data[$dateIndex])) {
                         foreach ($data[$dateIndex][$time] as $slots) {
-                            $amount = $slots['amount'];
-                            if ($recurrent) {
-                                $amount = 1;
-                            }
+                            $amount = 1;
                             for ($i = 0; $i < $amount; $i++) {
                                 $bookings[] = $slots['status'];
                             }
@@ -435,9 +361,10 @@ class CntndSimpleBooking
         return $displayData;
     }
 
-    private function dayType($value) {
+    private function dayType($value)
+    {
         $time = intval($value);
-        if ($time>1200) {
+        if ($time > 1200) {
             return "afternoon";
         }
         return "morning";
@@ -629,7 +556,6 @@ class CntndSimpleBooking
             // Send the message
             $result = $mailer->send($mail);
         } else {
-            var_dump($body);
             $result = true;
         }
         return $result;
@@ -767,7 +693,6 @@ class CntndSimpleBooking
             // Send the message
             $result = $mailer->send($mail);
         } else {
-            var_dump($body);
             $result = true;
         }
         return $result;
@@ -798,7 +723,6 @@ class CntndSimpleBooking
             // Send the message
             $result = $mailer->send($mail);
         } else {
-            var_dump($body);
             $result = true;
         }
         return $result;
