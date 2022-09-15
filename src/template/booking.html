@@ -1,0 +1,74 @@
+<!-- cntnd_booking/template/booking.html -->
+<div class="cntnd_booking-form"><span>Reservieren</span></div>
+<div class="cntnd_booking-table">
+    <div class="cntnd_booking-table__row header cntnd_booking_slots--interval">
+        <div class="cntnd_booking-table__cell"><span class="cntnd_booking-date_interval__label">Tag</span></div>
+        {foreach name=config item=config from=$data.dateConfig}
+        <div class="cntnd_booking-table__cell">
+            <span class="cntnd_booking-date_interval__label">{$config.time}<br />bis<br />{$config.time_until}</span>
+            {if $config.comment neq ''}
+            <br/><small>{$config.comment}</small>
+            {/if}
+        </div>
+        {/foreach}
+    </div>
+
+    {foreach name=reservation item=reservation from=$data.data}
+        {if $reservation.entries.dateConfigs|@count > 0}
+            {assign var="show_date" value=''}
+            {if $reservation.dateIndex>$reservation.showDaterange}
+                {assign var="show_date" value='not-in-range hide'}
+            {/if}
+            {assign var="morning" value=''}
+            {if $reservation.entries.morning}
+                {assign var="morning" value='disabled'}
+            {/if}
+            {assign var="afternoon" value=''}
+            {if $reservation.entries.afternoon}
+                {assign var="afternoon" value='disabled'}
+            {/if}
+            {assign var="day" value=''}
+            {if $reservation.entries.morning || $reservation.entries.afternoon}
+                {assign var="day" value='disabled'}
+            {/if}
+            <div class="cntnd_booking-table__row cntnd_booking_slots--interval {$show_date}" data-slot="{$reservation.dateIndex}">
+                <div class="cntnd_booking-table__cell header">
+                    <span class="cntnd_booking-date_interval" data-slot="{$reservation.dateIndex}">{$reservation.entries.title}</span>
+                    <ul class="cntnd_booking--actions">
+                        <li class="cntnd_booking--action {$morning}" data-slot="{$reservation.dateIndex}" data-action-type="morning">Vormittag</li>
+                        <li class="cntnd_booking--action {$afternoon}" data-slot="{$reservation.dateIndex}" data-action-type="afternoon">Nachmittag</li>
+                        <li class="cntnd_booking--action {$day}" data-slot="{$reservation.dateIndex}" data-action-type="all">Ganzer Tag</li>
+                    </ul>
+                </div>
+                {foreach name=config item=config from=$reservation.entries.dateConfigs}
+                <div class="cntnd_booking-table__cell hidden">
+                    <span class="cntnd_booking-date_interval__label">{$config.time} bis {$config.time_until}</span>
+                    {if $config.comment neq ''}
+                    <br/><small>{$config.comment}</small>
+                    {/if}
+                </div>
+                <div class="cntnd_booking-table__cell middle {$config.type}">
+                    <div class="d-flex cntnd_booking_slots--vertical" data-slot="{$reservation.dateIndex}-{$config.time_index}">
+                        {foreach name=booking item=booking from=$config.bookings}
+                            {assign var="disabled" value=''}
+                            {if $booking neq 'free'}
+                                {assign var="disabled" value='disabled="disabled"'}
+                            {/if}
+
+                            {if $one_click}
+                                {include file="cntnd_booking/template/booking_slot-oneclick.html" status=$booking disabled=$disabled value=$config.time_value}
+                            {else}
+                                {include file="cntnd_booking/template/booking_slot-default.html" status=$booking disabled=$disabled dateIndex=$reservation.dateIndex timeIndex=$config.time_index interval=$config.time_interval}
+                            {/if}
+                        {/foreach}
+                    </div>
+                </div>
+                {/foreach}
+            </div>
+        {/if}
+    {/foreach}
+</div>
+{if $pagination}
+{include file="cntnd_booking/template/booking_pagination.html"}
+{/if}
+<!-- /cntnd_booking/template/booking.html -->

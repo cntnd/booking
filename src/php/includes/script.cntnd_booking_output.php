@@ -1,5 +1,61 @@
+<script src="https://cdn.jsdelivr.net/gh/cntnd/core_style@0.1.3/dist/core_script.min.js"></script>
 <script>
 $(document).ready(function(){
+  // config
+  $('.cntnd_booking-config-add').click(function (){
+     var date = $(this).attr('data-date');
+
+     var table = $("table.order-list.date__"+date);
+
+     var lastRow = table.find("tbody > tr").last();
+     var counter = lastRow.attr("data-row");
+     counter++;
+
+     var newRow = $('<tr data-row="'+counter+'">');
+     var cols = "";
+
+     cols += '<td><input type="time" class="form-control" placeholder="Zeit (HH:mm)" name="config['+date+']['+counter+'][time]" required/></td>';
+     cols += '<td><input type="number" class="form-control" placeholder="Anzahl Slots" name="config['+date+']['+counter+'][slots]" required/></td>';
+     cols += '<td><input type="text" class="form-control" placeholder="Bemerkung" name="config['+date+']['+counter+'][comment]"/></td>';
+     cols += '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+
+     newRow.append(cols);
+     table.append(newRow);
+  });
+
+    $('.cntnd_booking-recurrent-config-add').click(function (){
+        var date = $(this).attr('data-date');
+
+        var table = $("table.order-list.date__"+date);
+
+        var lastRow = table.find("tbody > tr").last();
+        var counter = lastRow.attr("data-row");
+        counter++;
+
+        var newRow = $('<tr data-row="'+counter+'">');
+        var cols = "";
+
+        cols += '<td>';
+        cols += '<input type="time" class="form-control" placeholder="Zeit von (HH:mm)" name="config['+date+']['+counter+'][time]" required/>';
+        cols += '<input type="time" class="form-control" placeholder="Zeit bis (HH:mm)" name="config['+date+']['+counter+'][time_until]" />';
+        cols += '</td>';
+        cols += '<td><input type="number" class="form-control" placeholder="Anzahl Slots" name="config['+date+']['+counter+'][slots]" required/></td>';
+        cols += '<td><input type="text" class="form-control" placeholder="Bemerkung" name="config['+date+']['+counter+'][comment]"/></td>';
+        cols += '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
+
+        newRow.append(cols);
+        table.append(newRow);
+    });
+
+  $("table.order-list").on("click", ".cntnd_booking-config-delete", function (event) {
+      $(this).closest("tr").remove();
+  });
+
+  $('.cntnd_booking-config-save').click(function (){
+     $('#cntnd_booking-config').submit();
+  });
+
+  // admin
   $('.cntnd_booking-admin-choose').click(function(){
     $('.card.cntnd_booking').removeClass('focus');
     var res = $(this).parents('.card.cntnd_booking');
