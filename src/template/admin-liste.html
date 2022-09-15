@@ -5,7 +5,7 @@
   <h6>{$res.title}</h6>
   {/if}
   <div class="card cntnd_booking {$res.status} {if $res.past}past{/if}" data-resid="{$res.id}" data-timeslot="{$datum} {$res.time} - {$res.name} ({$res.personen} Personen)">
-    <h5 class="card-header">{$res.time} - Personen: {$res.personen}</h5>
+    <h5 class="card-header">{$res.time} - {$res.until}</h5>
     <div class="card-body">
       <div class="card-text">
         {$res.name}<br />

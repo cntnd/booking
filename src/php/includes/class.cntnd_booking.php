@@ -28,7 +28,6 @@ class CntndBooking
 
     private static $_vars = array(
         "db" => array(
-            "config" => "cntnd_booking_config",
             "bookings" => "cntnd_booking"
         )
     );
@@ -81,217 +80,6 @@ class CntndBooking
             }
         }
         return $config;
-    }
-
-    public function renderConfig($recurrent)
-    {
-        if ($recurrent) {
-            $this->recurrentConfig();
-        } else {
-            $this->customConfig();
-        }
-    }
-
-    private function reccurentIndexByWeekday($weekday)
-    {
-        $index_date = DateTimeUtil::getIndexFromWeekday($weekday);
-        $index = DateTimeUtil::getIndexFromDate(DateTimeUtil::getDateFromDaterange($this->daterange, $index_date));
-        return $index;
-    }
-
-    private function recurrentConfig()
-    {
-        $config = $this->config();
-
-        foreach ($this->blocked_days as $day => $blocked) {
-            if (!$blocked) {
-                $index = $this->reccurentIndexByWeekday($day);
-
-                echo '<h5>' . DateTimeUtil::getLongWeekdayByIndex($day) . '</h5>';
-                echo '<table class="table order-list date__' . $index . '">';
-                echo '<thead><tr>';
-                echo '<th>Zeit</th>';
-                echo '<th>Anzahl Slots</th>';
-                echo '<th colspan="2">Bemerkung (wird angezeigt)</th>';
-                echo '</tr></thead>';
-
-                echo '<tbody>';
-
-                $i = 0;
-                if (!is_null($config) && array_key_exists($index, $config)) {
-                    foreach ($config[$index] as $id => $dateConfig) {
-                        echo '<tr data-row="' . $id . '">';
-                        echo '<td>';
-                        echo '<input type="time" name="config[' . $index . '][' . $id . '][time]" class="form-control" placeholder="Zeit von (HH:mm)" value="' . CntndUtil::emptyIfNull($dateConfig['time']) . '" required/>';
-                        echo '<input type="time" name="config[' . $index . '][' . $id . '][time_until]" class="form-control" placeholder="Zeit bis (HH:mm)" value="' . CntndUtil::emptyIfNull($dateConfig['time_until']) . '" />';
-                        echo '</td>';
-                        echo '<td><input type="number" name="config[' . $index . '][' . $id . '][slots]" class="form-control" placeholder="Anzahl Slots" value="' . $dateConfig['slots'] . '" required/></td>';
-                        echo '<td><input type="text" name="config[' . $index . '][' . $id . '][comment]" class="form-control" placeholder="Bemerkung" value="' . $dateConfig['comment'] . '" /></td>';
-                        echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
-                        echo '</tr>';
-
-                        $i = $id + 1;
-                    }
-                }
-
-                echo '<tr data-row="' . $i . '">';
-                echo '<td>';
-                echo '<input type="time" name="config[' . $index . '][' . $i . '][time]" class="form-control" placeholder="Zeit von (HH:mm)" required/>';
-                echo '<input type="time" name="config[' . $index . '][' . $i . '][time_until]" class="form-control" placeholder="Zeit bis (HH:mm)" />';
-                echo '</td>';
-                echo '<td><input type="number" name="config[' . $index . '][' . $i . '][slots]" class="form-control" placeholder="Anzahl Slots" required/></td>';
-                echo '<td><input type="text" name="config[' . $index . '][' . $i . '][comment]" class="form-control" placeholder="Bemerkung"/></td>';
-                echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
-                echo '</tr>';
-
-                echo '</tbody>';
-
-                echo '<tfoot><tr>';
-                echo '<td colspan="4">';
-                echo '<button type="button" class="btn btn-sm btn-light cntnd_booking-recurrent-config-add" data-date="' . $index . '">Zeit hinzufügen</button>&nbsp;';
-                echo '<button type="button" class="btn btn-sm btn-primary cntnd_booking-config-save">Speichern</button>';
-                echo '</td>';
-                echo '</tr></tfoot>';
-
-                echo '</table>';
-            }
-        }
-    }
-
-    private function customConfig()
-    {
-        $config = $this->config();
-        $daterange = DateTimeUtil::getDaterange($this->daterange, $this->blocked_days);
-
-        foreach ($daterange as $date) {
-            $index = DateTimeUtil::getIndexFromDate($date[0]);
-            echo '<h5>' . $date[1] . '</h5>';
-            echo '<table class="table order-list date__' . $index . '">';
-            echo '<thead><tr>';
-            echo '<th>Zeit</th>';
-            echo '<th>Anzahl Slots</th>';
-            echo '<th colspan="2">Bemerkung (wird angezeigt)</th>';
-            echo '</tr></thead>';
-
-            echo '<tbody>';
-
-            $i = 0;
-            if (!is_null($config) && array_key_exists($index, $config)) {
-                foreach ($config[$index] as $id => $dateConfig) {
-                    echo '<tr data-row="' . $id . '">';
-                    echo '<td><input type="time" name="config[' . $index . '][' . $id . '][time]" class="form-control" placeholder="Zeit (HH:mm)" value="' . $dateConfig['time'] . '" required/></td>';
-                    echo '<td><input type="number" name="config[' . $index . '][' . $id . '][slots]" class="form-control" placeholder="Anzahl Slots" value="' . $dateConfig['slots'] . '" required/></td>';
-                    echo '<td><input type="text" name="config[' . $index . '][' . $id . '][comment]" class="form-control" placeholder="Bemerkung" value="' . $dateConfig['comment'] . '" /></td>';
-                    echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
-                    echo '</tr>';
-
-                    $i = $id + 1;
-                }
-            }
-
-            echo '<tr data-row="' . $i . '">';
-            echo '<td><input type="time" name="config[' . $index . '][' . $i . '][time]" class="form-control" placeholder="Zeit (HH:mm)" required/></td>';
-            echo '<td><input type="number" name="config[' . $index . '][' . $i . '][slots]" class="form-control" placeholder="Anzahl Slots" required/></td>';
-            echo '<td><input type="text" name="config[' . $index . '][' . $i . '][comment]" class="form-control" placeholder="Bemerkung"/></td>';
-            echo '<td><button type="button" class="btn btn-sm cntnd_booking-config-delete">Löschen</button></td>';
-            echo '</tr>';
-
-            echo '</tbody>';
-
-            echo '<tfoot><tr>';
-            echo '<td colspan="4">';
-            echo '<button type="button" class="btn btn-sm btn-light cntnd_booking-config-add" data-date="' . $index . '">Zeit hinzufügen</button>&nbsp;';
-            echo '<button type="button" class="btn btn-sm btn-primary cntnd_booking-config-save">Speichern</button>';
-            echo '</td>';
-            echo '</tr></tfoot>';
-
-            echo '</table>';
-        }
-    }
-
-    public function saveConfig($post, $interval = false)
-    {
-        $config = $this->config();
-
-        if (is_array($post['config'])) {
-            foreach ($post['config'] as $date => $dateConfig) {
-                if (is_null($config) || !array_key_exists($date, $config)) {
-                    $this->insertDateConfig($date, $dateConfig);
-                } else {
-                    if (!$interval) {
-                        $this->updateDateConfig($date, $dateConfig, $config[$date]);
-                    }
-                }
-            }
-        }
-
-        $this->config = $this->config();
-    }
-
-    private function checkDateTimeConfig($config)
-    {
-        if (array_key_exists('time', $config) &&
-            array_key_exists('slots', $config)) {
-            return (!empty($config['time']) && !empty($config['slots']));
-        }
-        return false;
-    }
-
-    private function insertDateConfig($date, $dateConfig)
-    {
-        foreach ($dateConfig as $config) {
-            $this->insertDateTimeConfig($date, $config);
-        }
-    }
-
-    private function insertDateTimeConfig($date, $config)
-    {
-        if ($this->checkDateTimeConfig($config)) {
-            $sql = "INSERT INTO :table (idart, date, time, time_until, day, slots, comment, recurrent) VALUES (:idart, ':date', ':time', ':until', :day, :slots, ':comment', :recurrent)";
-            $values = array(
-                'table' => self::$_vars['db']['config'],
-                'idart' => cSecurity::toInteger($this->idart),
-                'date' => DateTimeUtil::getInsertDate($date),
-                'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
-                'until' => DateTimeUtil::getInsertTimeOrNull($config['time_until']),
-                'day' => DateTimeUtil::getInsertDay($date),
-                'slots' => cSecurity::toInteger($config['slots']),
-                'comment' => $this->escape($config['comment']),
-                'recurrent' => CntndUtil::boolToInt($config['recurrent'])
-            );
-            $this->db->query($sql, $values);
-        }
-    }
-
-    private function updateDateConfig($date, $dateConfig, $originalConfig)
-    {
-        foreach ($dateConfig as $id => $config) {
-            if (array_key_exists($id, $originalConfig)) {
-                $this->updateDateTimeConfig($id, $date, $config);
-            } else {
-                $this->insertDateTimeConfig($date, $config);
-            }
-        }
-    }
-
-    private function updateDateTimeConfig($id, $date, $config)
-    {
-        if ($this->checkDateTimeConfig($config)) {
-            $sql = "UPDATE :table SET idart = :idart, date = ':date', time = ':time', time_until = ':until', day = :day, slots = :slots, comment = ':comment', recurrent = :recurrent WHERE id = :uid";
-            $values = array(
-                'table' => self::$_vars['db']['config'],
-                'uid' => cSecurity::toInteger($id),
-                'idart' => cSecurity::toInteger($this->idart),
-                'date' => DateTimeUtil::getInsertDate($date),
-                'time' => DateTimeUtil::getInsertDateTime($date, $config['time']),
-                'until' => DateTimeUtil::getInsertTimeOrNull($config['time_until']),
-                'day' => DateTimeUtil::getInsertDay($date),
-                'slots' => cSecurity::toInteger($config['slots']),
-                'comment' => $this->escape($config['comment']),
-                'recurrent' => CntndUtil::boolToInt($config['recurrent'])
-            );
-            $this->db->query($sql, $values);
-        }
     }
 
     public function daterange()
@@ -350,13 +138,15 @@ class CntndBooking
                 );
             }
 
-            $displayData[] = array(
+            $displayData['data'][] = array(
                 "index" => $index,
                 "dateIndex" => $dateIndex,
                 "showDaterange" => DateTimeUtil::getShowDaterange($this->daterange, $this->show_daterange),
                 "entries" => $entries
             );
         }
+
+        $displayData['dateConfig'] = $this->config;
 
         return $displayData;
     }
@@ -434,7 +224,7 @@ class CntndBooking
 
         $sql = "SELECT * FROM :table WHERE idart = :idart AND date = ':date' ORDER BY time";
         $values = array(
-            'table' => self::$_vars['db']['config'],
+            'table' => self::$_vars['db']['bookings'],
             'idart' => cSecurity::toInteger($idart),
             'date' => DateTimeUtil::getInsertDate($date));
         $db->query($sql, $values);
@@ -459,7 +249,7 @@ class CntndBooking
         $db = new cDb;
         $sql = "SELECT slots FROM :table WHERE idart = :idart AND time = ':time'";
         $values = array(
-            'table' => self::$_vars['db']['config'],
+            'table' => self::$_vars['db']['bookings'],
             'idart' => cSecurity::toInteger($idart),
             'time' => DateTimeUtil::getInsertDateTime($date, $time));
         $db->query($sql, $values);
@@ -587,7 +377,6 @@ class CntndBooking
         $smarty->assign('bemerkungen', $post['bemerkungen']);
         $smarty->assign('email', $post['email']);
         $smarty->assign('personen', $amount);
-        $smarty->assign('sauna', $this->subject['booking_title']);
         $body = $smarty->fetch('email-booking.html');
 
         if (!$this->debug) {
@@ -667,12 +456,14 @@ class CntndBooking
             $newDate = DateTimeUtil::getIndexFromDate($this->db->f('date'));
             $newTime = DateTimeUtil::getIndexFromDateTime($this->db->f('time'));
             $readableTime = DateTimeUtil::getReadableTimeFromDate($this->db->f('time'));
+            $readableUntil = DateTimeUtil::getReadableTimeFromDate($this->db->f('until'));
             if ($time != $newTime || $date != $newDate) {
                 $title = "Zeit: " . $readableTime;
             }
             $data_detail = array(
                 'id' => $this->db->f('id'),
                 'time' => $readableTime,
+                'until' => $readableUntil,
                 'name' => $this->db->f('name'),
                 'adresse' => $this->db->f('address'),
                 'status' => $this->db->f('status'),
@@ -731,7 +522,6 @@ class CntndBooking
         $smarty->assign('personen', $record->amount);
         $smarty->assign('bemerkungen', $record->comment);
         $smarty->assign('message', $post['bemerkungen']);
-        $smarty->assign('sauna', $this->subject['booking_title']);
         $body = $smarty->fetch('email-reserved.html');
 
         if (!$this->debug) {
@@ -763,7 +553,6 @@ class CntndBooking
         $smarty->assign('personen', $record->amount);
         $smarty->assign('bemerkungen', $record->comment);
         $smarty->assign('message', $post['bemerkungen']);
-        $smarty->assign('sauna', $this->subject['booking_title']);
         $body = $smarty->fetch('email-declined.html');
 
         if (!$this->debug) {

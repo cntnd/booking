@@ -14,10 +14,6 @@ $subject_reserved = "CMS_VALUE[6]";
 if (empty($subject_reserved)) {
     $subject_reserved = mi18n("DEFAULT_SUBJECT_RESERVED");
 }
-$recurrent = (bool)"CMS_VALUE[7]";
-if (!is_bool($recurrent)) {
-    $recurrent = true;
-}
 $one_click = (bool)"CMS_VALUE[8]";
 if (!is_bool($one_click)) {
     $one_click = false;
@@ -34,10 +30,6 @@ if (!is_bool($show_past_admin)) {
 $booking_title = "CMS_VALUE[22]";
 if (empty($booking_title)) {
     $booking_title = "booking";
-}
-$interval = (bool)"CMS_VALUE[30]";
-if (!is_bool($interval)) {
-    $interval = false;
 }
 $interval_slots = "CMS_VALUE[31]";
 switch ($interval_slots) {
@@ -151,19 +143,9 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
 
     <fieldset name="configuration">
         <legend><?= mi18n("RESERVATION_TITLE") ?></legend>
-        <div class="form-group">
-            <div class="form-check form-check-inline">
-                <input id="recurrent" class="form-check-input" type="checkbox" name="CMS_VAR[7]" value="true" <?php if ($recurrent) { echo 'checked'; } ?> />
-                <label for="recurrent" class="form-check-label"><?= mi18n("RECURRENT") ?></label>
-            </div>
 
-            <div class="form-check form-check-inline">
-                <input id="interval" class="form-check-input" type="checkbox" name="CMS_VAR[30]" value="true" <?php if ($interval) { echo 'checked'; } ?> <?php if (!$recurrent){ echo "disabled"; } ?> />
-                <label for="interval" class="form-check-label"><?= mi18n("INTERVAL") ?></label>
-            </div>
-        </div>
-
-        <fieldset id="interval_configuration" class="interval_configuration" <?php if (!$interval){ echo "disabled"; } ?>>
+        <fieldset id="interval_configuration" class="interval_configuration">
+            <legend><?= mi18n("INTERVAL") ?></legend>
             <div class="cntnd_alert cntnd_alert-primary <?php if(empty($timerange_to_disabled)){ echo "hide"; } ?>"><?= mi18n("TIME_DISABLED") ?></div>
 
             <div class="d-flex">

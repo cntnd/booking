@@ -156,3 +156,47 @@ tr.highlight {
 .interval_configuration:disabled > .cntnd_alert {
 	display: none;
 }
+
+/* Booking */
+.cntnd_booking-form {
+	background: rgba(204, 204, 204, 0.85);
+	padding: 10px;
+	position: fixed;
+	top: 50%;
+	right: 0;
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.cntnd_booking-table {
+	width: 100%;
+	display: table;
+	border-collapse: collapse;
+
+	.cntnd_booking-table__row {
+		display: table-row;
+		border-bottom: 1px solid silver;
+
+		&.header {
+			display: table-header-group;
+			position: sticky;
+			top: 0;
+			line-height: 1.1em;
+			background: rgba(255, 255, 255, .85);
+		}
+
+		> .cntnd_booking-table__cell {
+			display: table-cell;
+			padding: .25em 0;
+
+			&.hidden {
+				display: none;
+			}
+
+			&.middle {
+				display: table-cell;
+				vertical-align: middle;
+			}
+		}
+	}
+}

@@ -46,16 +46,5 @@
                 "firstDay": 1
             }
         });
-
-        $('#recurrent').change(function () {
-            $("#interval").prop("disabled", !$(this).is(':checked'))
-            if ($("#interval").is(':checked')) {
-                $("#interval_configuration").prop("disabled", !$(this).is(':checked'))
-            }
-        });
-
-        $('#interval').change(function () {
-            $("#interval_configuration").prop("disabled", !$(this).is(':checked'))
-        });
     });
 </script>

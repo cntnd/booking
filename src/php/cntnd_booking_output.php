@@ -70,14 +70,10 @@ if (empty($daterange)) {
 if ($editmode) {
     // ADMIN
     if ($_POST) {
-        if ($_POST["cntnd_booking-config"] == "save") {
-            $booking->saveConfig($_POST);
+        if (CntndBooking::validateUpdate($_POST)) {
+            $admin_success = $booking->update($_POST);
         } else {
-            if (CntndBooking::validateUpdate($_POST)) {
-                $admin_success = $booking->update($_POST);
-            } else {
-                $admin_error = true;
-            }
+            $admin_error = true;
         }
     }
 

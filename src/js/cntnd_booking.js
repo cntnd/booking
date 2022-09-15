@@ -153,4 +153,10 @@ $(document).ready(function(){
       behavior: 'smooth'
     });
   }
+
+  $('.cntnd_booking-form').click(function(){
+    $("body").scrollIntoView({
+      scrollTop: $("#cntnd_booking-reservation_form").offset().top
+    }, 50);
+  });
 });

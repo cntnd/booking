@@ -1,6 +1,19 @@
 <!-- cntnd_booking/template/booking.html -->
-<table class="table cntnd_booking-table">
-    {foreach name=reservation item=reservation from=$data}
+<div class="cntnd_booking-form"><span>Reservieren</span></div>
+<div class="cntnd_booking-table">
+    <div class="cntnd_booking-table__row header cntnd_booking_slots--interval">
+        <div class="cntnd_booking-table__cell"><span class="cntnd_booking-date_interval__label">Tag</span></div>
+        {foreach name=config item=config from=$data.dateConfig}
+        <div class="cntnd_booking-table__cell">
+            <span class="cntnd_booking-date_interval__label">{$config.time}<br />bis<br />{$config.time_until}</span>
+            {if $config.comment neq ''}
+            <br/><small>{$config.comment}</small>
+            {/if}
+        </div>
+        {/foreach}
+    </div>
+
+    {foreach name=reservation item=reservation from=$data.data}
         {if $reservation.entries.dateConfigs|@count > 0}
             {assign var="show_date" value=''}
             {if $reservation.dateIndex>$reservation.showDaterange}
@@ -18,27 +31,23 @@
             {if $reservation.entries.morning || $reservation.entries.afternoon}
                 {assign var="day" value='disabled'}
             {/if}
-            <tr class="cntnd_booking_slots--interval {$show_date}" data-slot="{$reservation.dateIndex}">
-                <th rowspan="2">
+            <div class="cntnd_booking-table__row cntnd_booking_slots--interval {$show_date}" data-slot="{$reservation.dateIndex}">
+                <div class="cntnd_booking-table__cell header">
                     <span class="cntnd_booking-date_interval" data-slot="{$reservation.dateIndex}">{$reservation.entries.title}</span>
                     <ul class="cntnd_booking--actions">
                         <li class="cntnd_booking--action {$morning}" data-slot="{$reservation.dateIndex}" data-action-type="morning">Vormittag</li>
                         <li class="cntnd_booking--action {$afternoon}" data-slot="{$reservation.dateIndex}" data-action-type="afternoon">Nachmittag</li>
                         <li class="cntnd_booking--action {$day}" data-slot="{$reservation.dateIndex}" data-action-type="all">Ganzer Tag</li>
                     </ul>
-                </th>
+                </div>
                 {foreach name=config item=config from=$reservation.entries.dateConfigs}
-                <td>
+                <div class="cntnd_booking-table__cell hidden">
                     <span class="cntnd_booking-date_interval__label">{$config.time} bis {$config.time_until}</span>
                     {if $config.comment neq ''}
                     <br/><small>{$config.comment}</small>
                     {/if}
-                </td>
-                {/foreach}
-            </tr>
-            <tr class="cntnd_booking_slots--interval {$show_date}" data-slot="{$reservation.dateIndex}">
-                {foreach name=config item=config from=$reservation.entries.dateConfigs}
-                <td class="{$config.type}">
+                </div>
+                <div class="cntnd_booking-table__cell middle {$config.type}">
                     <div class="d-flex cntnd_booking_slots--vertical" data-slot="{$reservation.dateIndex}-{$config.time_index}">
                         {foreach name=booking item=booking from=$config.bookings}
                             {assign var="disabled" value=''}
@@ -53,12 +62,12 @@
                             {/if}
                         {/foreach}
                     </div>
-                </td>
+                </div>
                 {/foreach}
-            </tr>
+            </div>
         {/if}
     {/foreach}
-</table>
+</div>
 {if $pagination}
 {include file="cntnd_booking/template/booking_pagination.html"}
 {/if}
