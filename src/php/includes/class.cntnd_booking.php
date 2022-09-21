@@ -11,6 +11,7 @@ class CntndBooking
 
     private $daterange;
     private $mailto;
+    private $email_copy;
     private $subject;
     private $blocked_days;
     private $one_click;
@@ -32,10 +33,11 @@ class CntndBooking
         )
     );
 
-    function __construct($daterange, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart)
+    function __construct($daterange, $mailto, $email_copy, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart)
     {
         $this->daterange = $daterange;
         $this->mailto = $mailto;
+        $this->email_copy = $email_copy;
         $this->subject = $subject;
         $this->blocked_days = $blocked_days;
         $this->one_click = $one_click;
@@ -388,6 +390,12 @@ class CntndBooking
                 ->setTo($post['email'])
                 ->setBody($body, 'text/html');
 
+            // Send copy
+            // todo or copy CC???
+            if ($this->email_copy['default']) {
+                $mail->addCc($this->email_copy['mailto']);
+            }
+
             // Send the message
             $result = $mailer->send($mail);
         } else {
@@ -533,6 +541,12 @@ class CntndBooking
                 ->setTo($record->email)
                 ->setBody($body, 'text/html');
 
+            // Send copy
+            // todo or copy CC???
+            if ($this->email_copy['reserved']) {
+                $mail->addCc($this->email_copy['mailto']);
+            }
+
             // Send the message
             $result = $mailer->send($mail);
         } else {
@@ -562,6 +576,12 @@ class CntndBooking
                 ->setFrom($this->mailto)
                 ->setTo($record->email)
                 ->setBody($body, 'text/html');
+
+            // Send copy
+            // todo or copy CC???
+            if ($this->email_copy['declined']) {
+                $mail->addCc($this->email_copy['mailto']);
+            }
 
             // Send the message
             $result = $mailer->send($mail);

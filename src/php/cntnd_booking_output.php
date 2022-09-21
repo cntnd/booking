@@ -20,7 +20,6 @@ $subject = array(
     'default' => $subject_default,
     'declined' => $subject_declined,
     'reserved' => $subject_reserved);
-$recurrent = (bool)"CMS_VALUE[7]";
 $one_click = (bool)"CMS_VALUE[8]";
 $show_daterange = "CMS_VALUE[9]";
 $show_past = (bool)"CMS_VALUE[20]";
@@ -42,6 +41,19 @@ $interval_slots = "CMS_VALUE[31]";
 $timerange_from = "CMS_VALUE[32]";
 $timerange_to = "CMS_VALUE[33]";
 
+$email_copy_default = (bool) "CMS_VALUE[40]";
+$email_copy_reserved = (bool) "CMS_VALUE[41]";
+$email_copy_declined = (bool) "CMS_VALUE[42]";
+$email_copy_mailto = "CMS_VALUE[43]";
+if (empty($email_copy_mailto)) {
+    $email_copy_mailto = $mailto;
+}
+$email_copy = array(
+    'default'=>$email_copy_default,
+    'reserved'=>$email_copy_reserved,
+    'declined'=>$email_copy_declined,
+    'mailto'=>$email_copy_mailto);
+
 $bootstrap_fallback = true;
 
 // includes
@@ -57,7 +69,7 @@ if ($editmode) {
 
 // other/vars
 $smarty = cSmartyFrontend::getInstance();
-$booking = new CntndBooking($daterange, $mailto, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart);
+$booking = new CntndBooking($daterange, $mailto, $email_copy, $subject, $blocked_days, $one_click, $show_daterange, $show_past, $interval_slots, $timerange_from, $timerange_to, $lang, $client, $idart);
 
 if (empty($daterange)) {
     echo '<div class="cntnd_alert cntnd_alert-primary">';
