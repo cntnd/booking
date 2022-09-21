@@ -46,6 +46,19 @@ switch ($interval_slots) {
 $timerange_from = "CMS_VALUE[32]";
 $timerange_to = "CMS_VALUE[33]";
 
+$email_copy_default = (bool) "CMS_VALUE[40]";
+if (!is_bool($email_copy_default)) {
+    $email_copy_default = false;
+}
+$email_copy_reserved = (bool) "CMS_VALUE[41]";
+if (!is_bool($email_copy_reserved)) {
+    $email_copy_reserved = false;
+}
+$email_copy_declined = (bool) "CMS_VALUE[42]";
+if (!is_bool($email_copy_declined)) {
+    $email_copy_declined = false;
+}
+
 // other/vars
 if (empty($interval_slots) || empty($timerange_from)) {
     $timerange_to_disabled = 'disabled="disabled"';
@@ -235,17 +248,49 @@ cInclude('module', 'includes/style.cntnd_booking_input.php');
             <input id="email" type="email" name="CMS_VAR[3]" value="CMS_VALUE[3]"/>
         </div>
         <div class="form-group">
-            <label for="email"><?= mi18n("SUBJECT") ?></label>
-            <input id="email" type="text" name="CMS_VAR[4]" value="<?= $subject ?>"/>
+            <label for="email_subject"><?= mi18n("SUBJECT") ?></label>
+            <input id="email_subject" type="text" name="CMS_VAR[4]" value="<?= $subject ?>"/>
         </div>
         <div class="form-group">
-            <label for="email"><?= mi18n("SUBJECT_DECLINED") ?></label>
-            <input id="email" type="text" name="CMS_VAR[5]" value="<?= $subject_declined ?>"/>
+            <label for="email_subject_declined"><?= mi18n("SUBJECT_DECLINED") ?></label>
+            <input id="email_subject_declined" type="text" name="CMS_VAR[5]" value="<?= $subject_declined ?>"/>
         </div>
         <div class="form-group">
-            <label for="email"><?= mi18n("SUBJECT_RESERVED") ?></label>
-            <input id="email" type="text" name="CMS_VAR[6]" value="<?= $subject_reserved ?>"/>
+            <label for="email_subject_reserved"><?= mi18n("SUBJECT_RESERVED") ?></label>
+            <input id="email_subject_reserved" type="text" name="CMS_VAR[6]" value="<?= $subject_reserved ?>"/>
         </div>
+
+        <fieldset>
+            <legend><?= mi18n("EMAIL_COPY") ?></legend>
+
+            <div class="form-group">
+                <div class="form-check form-check-inline">
+                    <input id="email_copy_default" class="form-check-input" type="checkbox" name="CMS_VAR[40]" value="true" <?php if ($email_copy_reserved) {
+                        echo 'checked';
+                    } ?> />
+                    <label for="email_copy_default" class="form-check-label"><?= mi18n("EMAIL_COPY_DEFAULT") ?></label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input id="email_copy_reserved" class="form-check-input" type="checkbox" name="CMS_VAR[41]" value="true" <?php if ($email_copy_reserved) {
+                        echo 'checked';
+                    } ?> />
+                    <label for="email_copy_reserved" class="form-check-label"><?= mi18n("EMAIL_COPY_RESERVED") ?></label>
+                </div>
+
+                <div class="form-check form-check-inline">
+                    <input id="email_copy_declined" class="form-check-input" type="checkbox" name="CMS_VAR[42]" value="true" <?php if ($email_copy_declined) {
+                        echo 'checked';
+                    } ?> />
+                    <label for="email_copy_declined" class="form-check-label"><?= mi18n("EMAIL_COPY_DECLINED") ?></label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="email"><?= mi18n("EMAIL") ?></label>
+                <input id="email" type="email" name="CMS_VAR[43]" value="CMS_VALUE[43]"/>
+            </div>
+
+        </fieldset>
     </fieldset>
 </div>
 <?php
