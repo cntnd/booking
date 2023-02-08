@@ -1,6 +1,6 @@
 {
   "name": "cntnd_booking",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Reservationssystem",
   "devDependencies": {
     "del": "^5.1.0",

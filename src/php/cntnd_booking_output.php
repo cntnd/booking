@@ -41,18 +41,18 @@ $interval_slots = "CMS_VALUE[31]";
 $timerange_from = "CMS_VALUE[32]";
 $timerange_to = "CMS_VALUE[33]";
 
-$email_copy_default = (bool) "CMS_VALUE[40]";
-$email_copy_reserved = (bool) "CMS_VALUE[41]";
-$email_copy_declined = (bool) "CMS_VALUE[42]";
+$email_copy_default = (bool)"CMS_VALUE[40]";
+$email_copy_reserved = (bool)"CMS_VALUE[41]";
+$email_copy_declined = (bool)"CMS_VALUE[42]";
 $email_copy_mailto = "CMS_VALUE[43]";
 if (empty($email_copy_mailto)) {
     $email_copy_mailto = $mailto;
 }
 $email_copy = array(
-    'default'=>$email_copy_default,
-    'reserved'=>$email_copy_reserved,
-    'declined'=>$email_copy_declined,
-    'mailto'=>$email_copy_mailto);
+    'default' => $email_copy_default,
+    'reserved' => $email_copy_reserved,
+    'declined' => $email_copy_declined,
+    'mailto' => $email_copy_mailto);
 
 $bootstrap_fallback = true;
 
@@ -66,6 +66,9 @@ if ($editmode) {
     }
     cInclude('module', 'includes/style.cntnd_booking_output.php');
 }
+else {
+    cInclude('module', 'includes/captcha.php');
+}
 
 // other/vars
 $smarty = cSmartyFrontend::getInstance();
@@ -78,7 +81,6 @@ if (empty($daterange)) {
     }
     echo '</div>';
 }
-
 if ($editmode) {
     // ADMIN
     if ($_POST) {
@@ -169,13 +171,24 @@ if ($editmode) {
 } else {
     // PUBLIC
     if ($_POST) {
-        if (CntndBooking::validate($_POST, $_SESSION['rand'])) {
-            if (CntndBooking::validateFree($_POST, $idart) && CntndBooking::validateAvailability($_POST, $idart)) {
-                $success = $booking->store($_POST);
-                $error = !$success;
-                $error_free = false;
+        // Honey Pot
+        $honeypot = $_POST['fax_hp'];
+        if (empty($honeypot)) {
+            // Captcha
+            if (Gregwar\Captcha\PhraseBuilder::comparePhrases($_SESSION['phrase'], $_POST['phrase'])) {
+                if (CntndBooking::validate($_POST, $_SESSION['rand'])) {
+                    if (CntndBooking::validateFree($_POST, $idart) && CntndBooking::validateAvailability($_POST, $idart)) {
+                        $success = $booking->store($_POST);
+                        $error = !$success;
+                        $error_free = false;
+                    } else {
+                        $error_free = true;
+                    }
+                } else {
+                    $failure = true;
+                }
             } else {
-                $error_free = true;
+                $error_captcha = true;
             }
         } else {
             $failure = true;
@@ -212,15 +225,30 @@ if ($editmode) {
     echo '</ul>';
     echo '</div>';
     if ($error) {
-        echo '<div class="cntnd_alert cntnd_alert-danger">' . mi18n("FAILURE") . '</li></div>';
+        echo '<div class="cntnd_alert cntnd_alert-danger">' . mi18n("FAILURE") . '</div>';
     }
     if ($error_free) {
         echo '<div class="cntnd_alert cntnd_alert-danger">' . mi18n("VALIDATION_FREE_SLOTS") . '</div>';
+    }
+    if ($error_captcha) {
+        echo '<div class="cntnd_alert cntnd_alert-danger">' . mi18n("VALIDATION_CAPTCHA") . '</div>';
     }
 
     // display form
     $smarty->display('form.html');
 
+    // captcha
+    $builder = new Gregwar\Captcha\CaptchaBuilder;
+    $builder->build();
+    $_SESSION['phrase'] = $builder->getPhrase();
+
+    echo '<div class="form-group">';
+    echo '<img src="'.$builder->inline().'" />';
+    echo '<label for="phrase">Geben Sie den Code aus dem Bild ein<em>*</em></label>';
+    echo '<input type="text" name="phrase" id="phrase" class="required form-control" />';
+    echo '</div>';
+
+    // form end
     echo '<button type="submit" class="btn btn-primary">' . mi18n("SAVE") . '</button>';
     echo '<button type="reset" class="btn">' . mi18n("RESET") . '</button>';
     echo '<input type="hidden" name="required" id="cntnd_booking-required" />';

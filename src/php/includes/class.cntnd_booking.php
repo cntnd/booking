@@ -391,7 +391,6 @@ class CntndBooking
                 ->setBody($body, 'text/html');
 
             // Send copy
-            // todo or copy CC???
             if ($this->email_copy['default']) {
                 $mail->addCc($this->email_copy['mailto']);
             }
@@ -399,6 +398,7 @@ class CntndBooking
             // Send the message
             $result = $mailer->send($mail);
         } else {
+            var_dump($body);
             $result = true;
         }
         return $result;
@@ -542,7 +542,6 @@ class CntndBooking
                 ->setBody($body, 'text/html');
 
             // Send copy
-            // todo or copy CC???
             if ($this->email_copy['reserved']) {
                 $mail->addCc($this->email_copy['mailto']);
             }
@@ -550,6 +549,7 @@ class CntndBooking
             // Send the message
             $result = $mailer->send($mail);
         } else {
+            var_dump($body);
             $result = true;
         }
         return $result;
@@ -578,7 +578,6 @@ class CntndBooking
                 ->setBody($body, 'text/html');
 
             // Send copy
-            // todo or copy CC???
             if ($this->email_copy['declined']) {
                 $mail->addCc($this->email_copy['mailto']);
             }
@@ -586,6 +585,7 @@ class CntndBooking
             // Send the message
             $result = $mailer->send($mail);
         } else {
+            var_dump($body);
             $result = true;
         }
         return $result;
